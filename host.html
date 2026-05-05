@@ -5,53 +5,93 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Boggle Party - Display</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Orbitron:wght@700&display=swap');
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #0a1628; color: #e0e8f8; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-h1 { color: #2979ff; margin-bottom: 10px; }
-#lobby, #game, #results { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 900px; }
+body { font-family: 'Russo One', sans-serif; background: radial-gradient(ellipse at center, #1a0a3e 0%, #0a0618 100%); color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow: hidden; }
+h1 { font-family: 'Orbitron', sans-serif; font-size: 2.5em; background: linear-gradient(90deg, #ff6b35, #ffd700, #ff6b35); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 30px rgba(255,215,0,0.3); margin-bottom: 10px; animation: glow 2s ease-in-out infinite alternate; }
+@keyframes glow { from { filter: drop-shadow(0 0 5px #ffd700); } to { filter: drop-shadow(0 0 20px #ff6b35); } }
+@keyframes slideIn { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes popIn { 0% { transform: scale(0); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes spotlight { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+@keyframes confetti { 0% { transform: translateY(-10px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+@keyframes flashWord { 0% { transform: scale(0) rotate(-10deg); opacity: 0; } 50% { transform: scale(1.3) rotate(2deg); } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+@keyframes raceMove { from { left: 3px; } }
+
+#lobby, #game, #results { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 1000px; }
 #lobby.active, #game.active, #results.active { display: flex; }
-#qr-section { text-align: center; margin: 20px 0; }
-#join-url { font-size: 1.2em; opacity: 0.8; margin: 8px 0; word-break: break-all; }
-#settings-display { background: #112240; padding: 10px 20px; border-radius: 8px; margin: 10px 0; font-size: 1em; opacity: 0.8; }
-.player-row { display: flex; justify-content: space-between; align-items: center; background: #112240; padding: 10px 20px; border-radius: 8px; margin: 5px 0; font-size: 1.1em; width: 100%; max-width: 500px; }
-.player-name { font-weight: bold; }
-.player-score { color: #2979ff; font-weight: bold; }
-.player-words { opacity: 0.7; font-size: 0.9em; }
-.host-badge { background: #ffd700; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; margin-left: 8px; }
-#game-header { display: flex; gap: 30px; align-items: center; margin: 15px 0; }
-#timer { font-size: 2.5em; font-weight: bold; background: #2979ff; padding: 8px 25px; border-radius: 10px; }
-#board { display: grid; gap: 8px; margin: 20px 0; }
-.cell { width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 1.8em; font-weight: bold; background: #1a3a6b; border-radius: 50%; }
-#players-area { margin: 15px 0; width: 100%; max-width: 500px; }
-#players-area h3 { margin-bottom: 8px; }
+
+/* Lobby */
+#qr-section { text-align: center; margin: 20px 0; animation: slideIn 0.5s ease-out; }
+#room-code { font-family: 'Orbitron', sans-serif; font-size: 2.5em; color: #ffd700; letter-spacing: 8px; text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+#join-url { opacity: 0.6; margin: 8px 0; font-size: 0.9em; word-break: break-all; font-family: monospace; }
+#settings-display { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,215,0,0.3); padding: 12px 24px; border-radius: 12px; margin: 10px 0; font-size: 1.1em; color: #ffd700; backdrop-filter: blur(5px); }
+#waiting-msg { font-size: 1.3em; opacity: 0.7; margin: 20px 0; animation: pulse 2s infinite; }
+.player-row { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, rgba(255,107,53,0.1), rgba(255,215,0,0.05)); border: 1px solid rgba(255,215,0,0.2); padding: 12px 24px; border-radius: 12px; margin: 6px 0; font-size: 1.1em; width: 100%; max-width: 500px; animation: slideIn 0.3s ease-out; backdrop-filter: blur(3px); }
+.player-name { font-weight: bold; color: #fff; }
+.player-score { color: #ffd700; font-weight: bold; font-family: 'Orbitron', sans-serif; }
+.player-words { opacity: 0.6; font-size: 0.9em; }
+.host-badge { background: linear-gradient(135deg, #ffd700, #ff6b35); color: #000; padding: 3px 10px; border-radius: 6px; font-size: 0.7em; margin-left: 10px; font-weight: bold; }
+#players-area, #players-area-game { margin: 15px 0; width: 100%; max-width: 500px; }
+#players-area h3, #players-area-game h3 { color: #ffd700; margin-bottom: 10px; font-size: 1.2em; }
+
+/* Game */
+#game-header { display: flex; gap: 30px; align-items: center; margin: 15px 0; flex-wrap: wrap; justify-content: center; }
+#timer { font-family: 'Orbitron', sans-serif; font-size: 3em; font-weight: bold; background: linear-gradient(135deg, #ff6b35, #ffd700); padding: 10px 30px; border-radius: 15px; color: #000; box-shadow: 0 0 30px rgba(255,107,53,0.5); animation: pulse 1s infinite; }
+#game-settings { font-size: 0.85em; opacity: 0.6; }
+#board { display: grid; gap: 10px; margin: 20px 0; }
+.cell { width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; font-size: 2em; font-weight: bold; background: linear-gradient(135deg, #2a1a5e, #1a0a3e); border: 2px solid rgba(255,215,0,0.3); border-radius: 50%; color: #fff; box-shadow: 0 0 10px rgba(138,43,226,0.3); animation: popIn 0.3s ease-out backwards; }
+
 /* Results */
-#results h2 { color: #2979ff; margin: 20px 0 10px; }
+#results h2 { font-family: 'Orbitron', sans-serif; font-size: 2.2em; background: linear-gradient(90deg, #ffd700, #ff6b35); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 20px 0; animation: glow 1.5s ease-in-out infinite alternate; }
 #race-track { width: 100%; margin: 20px 0; }
-.race-lane { display: flex; align-items: center; margin: 8px 0; height: 50px; position: relative; background: #112240; border-radius: 25px; overflow: hidden; }
-.race-lane .track-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(90deg, transparent, transparent 48px, #1a3a6b33 48px, #1a3a6b33 50px); }
-.race-avatar { position: absolute; left: 3px; height: 44px; width: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5em; transition: left 0.6s ease-out; margin: 3px; z-index: 1; }
-.race-name { position: absolute; right: 10px; font-size: 0.85em; font-weight: bold; z-index: 1; opacity: 0.9; }
-.race-score { position: absolute; left: 55px; font-size: 0.9em; font-weight: bold; z-index: 1; color: #2979ff; }
-.finish-line { position: absolute; right: 0; top: 0; bottom: 0; width: 4px; background: repeating-linear-gradient(0deg, #fff, #fff 5px, #000 5px, #000 10px); z-index: 0; }
-#word-reveal h3 { margin: 15px 0 8px; color: #2979ff; }
-#reveal-stream { display: flex; flex-wrap: wrap; gap: 6px; max-height: 200px; overflow-y: auto; padding: 10px 0; }
-.word-common { background: #1a3a6b; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; }
-.word-unique { background: #2979ff33; border: 1px solid #2979ff; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; }
-#waiting-msg { font-size: 1.2em; opacity: 0.7; margin: 20px 0; }
+.race-lane { display: flex; align-items: center; margin: 10px 0; height: 55px; position: relative; background: linear-gradient(90deg, rgba(255,107,53,0.05), rgba(255,215,0,0.1)); border: 1px solid rgba(255,215,0,0.2); border-radius: 30px; overflow: hidden; }
+.race-lane .track-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(90deg, transparent, transparent 48px, rgba(255,215,0,0.05) 48px, rgba(255,215,0,0.05) 50px); }
+.race-avatar { position: absolute; left: 3px; height: 46px; width: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6em; transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); margin: 3px; z-index: 1; box-shadow: 0 0 15px rgba(255,215,0,0.4); }
+.race-name { position: absolute; right: 12px; font-size: 0.9em; font-weight: bold; z-index: 1; opacity: 0.9; }
+.race-score { position: absolute; left: 58px; font-size: 0.95em; font-weight: bold; z-index: 1; color: #ffd700; font-family: 'Orbitron', sans-serif; }
+.finish-line { position: absolute; right: 0; top: 0; bottom: 0; width: 5px; background: repeating-linear-gradient(0deg, #ffd700, #ffd700 5px, transparent 5px, transparent 10px); z-index: 0; box-shadow: 0 0 10px rgba(255,215,0,0.5); }
+#word-reveal { width: 100%; margin: 20px 0; }
+#word-reveal h3 { margin: 15px 0 8px; color: #ffd700; font-size: 1.3em; }
+#reveal-stream { display: flex; flex-wrap: wrap; gap: 8px; max-height: 250px; overflow-y: auto; padding: 15px 0; justify-content: center; }
+.word-common { background: linear-gradient(135deg, rgba(138,43,226,0.3), rgba(75,0,130,0.3)); border: 1px solid rgba(138,43,226,0.6); padding: 6px 14px; border-radius: 8px; font-size: 0.95em; animation: flashWord 0.5s ease-out backwards; box-shadow: 0 0 10px rgba(138,43,226,0.3); }
+.word-unique { background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,107,53,0.1)); border: 1px solid rgba(255,215,0,0.5); padding: 6px 14px; border-radius: 8px; font-size: 0.95em; animation: flashWord 0.5s ease-out backwards; box-shadow: 0 0 10px rgba(255,215,0,0.2); }
+#waiting-restart { opacity: 0.6; margin-top: 20px; animation: pulse 2s infinite; }
+#progress-bar { width: 100%; max-width: 700px; display: flex; gap: 4px; margin: 8px 0; align-items: center; }
+.progress-track { height: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,215,0,0.15); overflow: hidden; position: relative; }
+.progress-track:first-child { border-radius: 7px 0 0 7px; }
+.progress-track:last-child { border-radius: 0 7px 7px 0; }
+.progress-track .fill { height: 100%; width: 0%; transition: width 0.4s ease-out; }
+.fill-common { background: linear-gradient(90deg, #8a2be2, #a855f7); }
+.fill-unique { background: linear-gradient(90deg, #ff6b35, #ffd700); }
+#progress-labels { display: flex; justify-content: space-between; width: 100%; max-width: 700px; font-size: 0.8em; margin-bottom: 5px; opacity: 0.8; }
+#progress-labels .lbl-common { color: #a855f7; }
+#progress-labels .lbl-unique { color: #ffd700; }
+#word-stage { width: 100%; height: 120px; display: flex; align-items: center; justify-content: center; position: relative; margin: 30px 0 40px 0; }
+#stage-word { font-family: 'Orbitron', sans-serif; font-size: 3em; color: #fff; text-shadow: 0 0 30px rgba(255,215,0,0.6); opacity: 0; transform: scale(0); transition: none; }
+#stage-word.show { opacity: 1; transform: scale(1); animation: flashWord 0.35s ease-out; }
+#stage-word.common { color: #a855f7; text-shadow: 0 0 30px rgba(138,43,226,0.8); }
+#stage-word.unique { color: #ffd700; text-shadow: 0 0 30px rgba(255,215,0,0.8); }
+.flying-point { position: fixed; font-family: 'Orbitron', sans-serif; font-size: 2.2em; font-weight: bold; color: #ffd700; pointer-events: none; z-index: 1000; text-shadow: 0 0 15px rgba(255,215,0,0.9); transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); opacity: 1; }
+.flying-point.fly { opacity: 0.8; transform: scale(0.7); }
+#winner-banner { text-align: center; font-family: 'Orbitron', sans-serif; font-size: 2.2em; color: #ffd700; animation: flashWord 0.8s ease-out, glow 1.5s ease-in-out infinite alternate; margin: 20px 0; }
+#confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+.confetti-piece { position: absolute; width: 10px; height: 10px; top: -10px; animation: confetti 3s linear forwards; }
 </style>
 </head>
 <body>
-<h1>🎲 Boggle Party</h1>
+<div id="confetti-container"></div>
+<h1>🎲 BOGGLE PARTY</h1>
 
 <div id="lobby" class="active">
   <div id="qr-section">
-    <div id="room-code" style="font-size:2em;font-weight:bold;color:#2979ff;letter-spacing:4px;margin-bottom:5px;"></div>
+    <div id="room-code"></div>
     <div id="join-url"></div>
-    <img id="qr-img" style="margin:10px auto;width:200px;height:200px;">
+    <img id="qr-img" style="margin:15px auto;width:220px;height:220px;border-radius:12px;box-shadow:0 0 30px rgba(255,215,0,0.3);">
   </div>
   <div id="settings-display"></div>
-  <div id="waiting-msg">Waiting for players to join...</div>
-  <div id="players-area"><h3>Players</h3><div id="players"></div></div>
+  <div id="waiting-msg">⚡ Waiting for players to join...</div>
+  <div id="players-area"><h3>🎮 Players</h3><div id="players"></div></div>
 </div>
 
 <div id="game">
@@ -61,29 +101,49 @@ h1 { color: #2979ff; margin-bottom: 10px; }
     <span id="player-count"></span>
   </div>
   <div id="board"></div>
-  <div id="players-area-game"><h3>Scoreboard</h3><div id="players-game"></div></div>
+  <div id="players-area-game"><h3>🏆 Scoreboard</h3><div id="players-game"></div></div>
 </div>
 
 <div id="results">
-  <h2>🏁 Race Results!</h2>
+  <h2>🏁 RACE RESULTS!</h2>
+  <div id="progress-labels"></div>
+  <div id="progress-bar">
+    <div class="progress-track" id="track-common"><div class="fill fill-common" id="fill-common"></div></div>
+    <div class="progress-track" id="track-unique"><div class="fill fill-unique" id="fill-unique"></div></div>
+  </div>
+  <div id="word-stage"><span id="stage-word"></span></div>
   <div id="race-track"></div>
-  <div id="word-reveal"></div>
-  <div id="waiting-restart" style="opacity:0.7;margin-top:15px;">Waiting for host to start next round...</div>
+  <div id="winner-banner" style="display:none;"></div>
+  <div id="waiting-restart">⚡ Waiting for host to start next round...</div>
 </div>
 
 <script>
 let ws, players = [];
-const AVATARS = ['🦆', '🐸', '🦊', '🐙', '🦄', '🐢', '🦩', '🐧'];
-const COLORS = ['#e53935', '#43a047', '#fb8c00', '#8e24aa', '#00acc1', '#f4511e', '#3949ab', '#d81b60'];
-
 let roomCode = '';
+const AVATARS = ['🦆', '🐸', '🦊', '🐙', '🦄', '🐢', '🦩', '🐧'];
+const COLORS = ['#ff6b35', '#00e676', '#ffd700', '#e040fb', '#00e5ff', '#ff5252', '#536dfe', '#ff4081'];
+
+function spawnConfetti() {
+  const container = document.getElementById('confetti-container');
+  const colors = ['#ffd700', '#ff6b35', '#e040fb', '#00e5ff', '#00e676', '#ff5252'];
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDelay = Math.random() * 2 + 's';
+    piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+    container.appendChild(piece);
+  }
+  setTimeout(() => container.innerHTML = '', 5000);
+}
 
 function connect() {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${proto}//${location.host}`);
-  ws.onopen = () => {
-    ws.send(JSON.stringify({ type: 'create-room' }));
-  };
+  ws.onopen = () => ws.send(JSON.stringify({ type: 'create-room' }));
   ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
   ws.onclose = () => setTimeout(connect, 2000);
 }
@@ -94,8 +154,8 @@ function handleMessage(msg) {
       roomCode = msg.code;
       const joinUrl = `${location.origin}/play?room=${msg.code}`;
       document.getElementById('join-url').textContent = joinUrl;
-      document.getElementById('room-code').textContent = `Room: ${msg.code}`;
-      document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
+      document.getElementById('room-code').textContent = `⚡ ${msg.code} ⚡`;
+      document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(joinUrl)}`;
       updateSettings(msg);
       break;
     case 'room-state':
@@ -133,21 +193,22 @@ function handleMessage(msg) {
 }
 
 function updateSettings(msg) {
-  const text = `Grid: ${msg.gridSize}×${msg.gridSize} | Min: ${msg.minWordLen} letters | Timer: ${msg.duration || msg.timeLeft}s`;
+  const text = `🎯 ${msg.gridSize}×${msg.gridSize} Grid | ${msg.minWordLen}+ Letters | ⏱ ${msg.duration || msg.timeLeft}s`;
   document.getElementById('settings-display').textContent = text;
   const gs = document.getElementById('game-settings');
   if (gs) gs.textContent = text;
 }
 
 function renderPlayers() {
-  const html = players.map(p => `<div class="player-row"><span class="player-name">${p.name}${p.isHost ? '<span class="host-badge">HOST</span>' : ''}</span><span class="player-words">${p.wordCount} words</span><span class="player-score">${p.score} pts</span></div>`).join('');
+  const sorted = [...players].sort((a, b) => b.score - a.score);
+  const html = sorted.map((p, i) => `<div class="player-row" style="animation-delay:${i*0.1}s"><span class="player-name">${AVATARS[i % AVATARS.length]} ${p.name}${p.isHost ? '<span class="host-badge">HOST</span>' : ''}</span><span class="player-words">${p.wordCount} words</span><span class="player-score">${p.score}</span></div>`).join('');
   const el1 = document.getElementById('players');
   const el2 = document.getElementById('players-game');
   if (el1) el1.innerHTML = html;
   if (el2) el2.innerHTML = html;
   const countEl = document.getElementById('player-count');
-  if (countEl) countEl.textContent = `${players.length} player${players.length !== 1 ? 's' : ''}`;
-  if (players.length > 0) document.getElementById('waiting-msg').textContent = 'Waiting for host to start...';
+  if (countEl) countEl.textContent = `🎮 ${players.length} player${players.length !== 1 ? 's' : ''}`;
+  if (players.length > 0) document.getElementById('waiting-msg').textContent = '⚡ Waiting for host to start...';
 }
 
 function showLobby() {
@@ -162,29 +223,35 @@ function showGame(msg) {
   document.getElementById('results').classList.remove('active');
   document.getElementById('game').classList.add('active');
   const el = document.getElementById('board');
-  el.style.gridTemplateColumns = `repeat(${msg.gridSize}, 70px)`;
-  el.innerHTML = msg.board.map(l => `<div class="cell">${l === 'Q' ? 'Qu' : l}</div>`).join('');
+  el.style.gridTemplateColumns = `repeat(${msg.gridSize}, 75px)`;
+  el.innerHTML = msg.board.map((l, i) => `<div class="cell" style="animation-delay:${i*0.03}s">${l === 'Q' ? 'Qu' : l}</div>`).join('');
   updateTimer(msg.timeLeft);
 }
 
 function updateTimer(timeLeft) {
   const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
-  document.getElementById('timer').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+  const el = document.getElementById('timer');
+  el.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+  if (timeLeft <= 10) el.style.animation = 'pulse 0.5s infinite';
+  else el.style.animation = 'pulse 1s infinite';
 }
 
 function showResults(results) {
   document.getElementById('game').classList.remove('active');
   document.getElementById('results').classList.add('active');
+  spawnConfetti();
+
   const entries = Object.entries(results).sort((a, b) => b[1].score - a[1].score);
   const maxScore = entries.length > 0 ? entries[0][1].score : 1;
 
+  // Race track
   const trackEl = document.getElementById('race-track');
   trackEl.innerHTML = entries.map(([name, data], i) => `
-    <div class="race-lane">
+    <div class="race-lane" style="animation: slideIn 0.5s ease-out ${i*0.15}s backwards">
       <div class="track-bg"></div>
       <div class="finish-line"></div>
       <div class="race-avatar" id="avatar-${i}" style="background:${COLORS[i % COLORS.length]};left:3px;">${AVATARS[i % AVATARS.length]}</div>
-      <span class="race-score" id="score-${i}">0 pts</span>
+      <span class="race-score" id="score-${i}">0</span>
       <span class="race-name">${name}</span>
     </div>
   `).join('');
@@ -204,41 +271,111 @@ function showResults(results) {
   commonWords.forEach(([w, p]) => sequence.push({ word: w, players: p, type: 'common' }));
   entries.forEach(([name]) => { uniqueByPlayer[name].forEach(w => sequence.push({ word: w, players: [name], type: 'unique' })); });
 
+  const totalWords = sequence.length;
+  const commonCount = commonWords.length;
   const runningScores = {};
   entries.forEach(([name]) => { runningScores[name] = 0; });
 
-  const revealEl = document.getElementById('word-reveal');
-  revealEl.innerHTML = '<h3>📋 Revealing Words...</h3><div id="reveal-stream"></div>';
-  const streamEl = document.getElementById('reveal-stream');
+  // Progress bar setup
+  const fillCommon = document.getElementById('fill-common');
+  const fillUnique = document.getElementById('fill-unique');
+  const trackCommon = document.getElementById('track-common');
+  const trackUnique = document.getElementById('track-unique');
+  fillCommon.style.width = '0%';
+  fillUnique.style.width = '0%';
+  const commonPct = totalWords > 0 ? (commonCount / totalWords) * 100 : 0;
+  trackCommon.style.flex = commonCount > 0 ? `${commonCount}` : '0';
+  trackUnique.style.flex = `${totalWords - commonCount}`;
+  trackCommon.style.display = commonCount > 0 ? '' : 'none';
+  // Labels
+  const labelsEl = document.getElementById('progress-labels');
+  labelsEl.innerHTML = (commonCount > 0 ? `<span class="lbl-common">🤝 ${commonCount} common</span>` : '<span></span>') +
+    `<span class="lbl-unique">⭐ ${totalWords - commonCount} unique</span>`;
+
+  const stageWord = document.getElementById('stage-word');
+  document.getElementById('winner-banner').style.display = 'none';
 
   let idx = 0;
   function revealNext() {
     if (idx >= sequence.length) {
-      if (entries.length > 0) streamEl.innerHTML += `<div style="text-align:center;margin-top:20px;font-size:1.5em;color:#ffd700;width:100%;">👑 ${entries[0][0]} wins!</div>`;
+      stageWord.className = '';
+      stageWord.textContent = '';
+      if (entries.length > 0) {
+        spawnConfetti();
+        const banner = document.getElementById('winner-banner');
+        banner.style.display = '';
+        banner.textContent = `👑 ${entries[0][0]} WINS! 👑`;
+      }
       return;
     }
+
     const item = sequence[idx];
     const pts = [0,0,0,1,1,2,3,5,11][Math.min(item.word.length, 8)];
-    const pill = document.createElement('span');
-    pill.className = item.type === 'common' ? 'word-common' : 'word-unique';
-    pill.innerHTML = item.type === 'common'
-      ? `${item.word} <small>(${item.players.map(p => AVATARS[entries.findIndex(e => e[0] === p) % AVATARS.length]).join('')})</small>`
-      : `${item.word} <small>${AVATARS[entries.findIndex(e => e[0] === item.players[0]) % AVATARS.length]}</small>`;
-    pill.style.opacity = '0'; pill.style.transition = 'opacity 0.3s';
-    streamEl.appendChild(pill);
-    setTimeout(() => pill.style.opacity = '1', 50);
-    item.players.forEach(name => {
-      runningScores[name] += pts;
-      const i = entries.findIndex(e => e[0] === name);
-      const pct = maxScore > 0 ? (runningScores[name] / maxScore) * 85 : 0;
-      document.getElementById(`avatar-${i}`).style.left = `calc(${pct}% - 22px + 3px)`;
-      document.getElementById(`score-${i}`).textContent = `${runningScores[name]} pts`;
-    });
-    streamEl.scrollTop = streamEl.scrollHeight;
+    const isCommon = item.type === 'common';
+
+    // Update progress bar
+    if (isCommon) {
+      fillCommon.style.width = `${((idx + 1) / commonCount) * 100}%`;
+    } else {
+      fillCommon.style.width = '100%';
+      const uniqueIdx = idx - commonCount + 1;
+      const uniqueTotal = totalWords - commonCount;
+      fillUnique.style.width = `${(uniqueIdx / uniqueTotal) * 100}%`;
+    }
+
+    // Flash word on stage
+    stageWord.textContent = item.word;
+    stageWord.className = `show ${item.type}`;
+
+    // After brief display, fly points to avatars
+    setTimeout(() => {
+      const wordRect = stageWord.getBoundingClientRect();
+      item.players.forEach((name, pIdx) => {
+        runningScores[name] += pts;
+        const i = entries.findIndex(e => e[0] === name);
+        const avatarEl = document.getElementById(`avatar-${i}`);
+        const avatarRect = avatarEl.getBoundingClientRect();
+
+        // Create flying point
+        const flyPt = document.createElement('div');
+        flyPt.className = 'flying-point';
+        flyPt.textContent = `+${pts}`;
+        const startX = wordRect.left + wordRect.width/2 - 20;
+        const startY = wordRect.top + wordRect.height/2 - 15;
+        const endX = avatarRect.left + avatarRect.width/2 - 20;
+        const endY = avatarRect.top + avatarRect.height/2 - 15;
+        flyPt.style.left = `${startX}px`;
+        flyPt.style.top = `${startY}px`;
+        document.body.appendChild(flyPt);
+
+        // Curved path using Web Animations API
+        const cpX = (startX + endX) / 2 + (pIdx % 2 === 0 ? -100 : 100);
+        const cpY = Math.min(startY, endY) - 80;
+        flyPt.animate([
+          { left: `${startX}px`, top: `${startY}px`, opacity: 1, transform: 'scale(1)' },
+          { left: `${startX + (cpX - startX)*0.5}px`, top: `${startY + (cpY - startY)*0.7}px`, opacity: 1, transform: 'scale(1.2)', offset: 0.25 },
+          { left: `${cpX}px`, top: `${cpY}px`, opacity: 1, transform: 'scale(1.4)', offset: 0.5 },
+          { left: `${cpX + (endX - cpX)*0.5}px`, top: `${cpY + (endY - cpY)*0.5}px`, opacity: 0.9, transform: 'scale(1.1)', offset: 0.75 },
+          { left: `${endX}px`, top: `${endY}px`, opacity: 0.7, transform: 'scale(0.5)' }
+        ], { duration: 900, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
+
+        setTimeout(() => {
+          flyPt.remove();
+          const pct = maxScore > 0 ? (runningScores[name] / maxScore) * 85 : 0;
+          avatarEl.style.left = `calc(${pct}% - 23px + 3px)`;
+          document.getElementById(`score-${i}`).textContent = runningScores[name];
+        }, 900);
+      });
+    }, 250);
+
     idx++;
-    setTimeout(revealNext, 800);
+    setTimeout(() => {
+      stageWord.className = '';
+      setTimeout(revealNext, 200);
+    }, 1000);
   }
-  setTimeout(revealNext, 1000);
+
+  setTimeout(revealNext, 1500);
 }
 
 connect();
