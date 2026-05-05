@@ -4,7 +4,7 @@ const path = require('path');
 const { WebSocketServer } = require('ws');
 const os = require('os');
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const DEFAULT_DURATION = 180;
 
 // --- Dictionary ---
