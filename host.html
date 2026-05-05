@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boggle Party - Display</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #0a1628; color: #e0e8f8; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+h1 { color: #2979ff; margin-bottom: 10px; }
+#lobby, #game, #results { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 900px; }
+#lobby.active, #game.active, #results.active { display: flex; }
+#qr-section { text-align: center; margin: 20px 0; }
+#join-url { font-size: 1.2em; opacity: 0.8; margin: 8px 0; word-break: break-all; }
+#settings-display { background: #112240; padding: 10px 20px; border-radius: 8px; margin: 10px 0; font-size: 1em; opacity: 0.8; }
+.player-row { display: flex; justify-content: space-between; align-items: center; background: #112240; padding: 10px 20px; border-radius: 8px; margin: 5px 0; font-size: 1.1em; width: 100%; max-width: 500px; }
+.player-name { font-weight: bold; }
+.player-score { color: #2979ff; font-weight: bold; }
+.player-words { opacity: 0.7; font-size: 0.9em; }
+.host-badge { background: #ffd700; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; margin-left: 8px; }
+#game-header { display: flex; gap: 30px; align-items: center; margin: 15px 0; }
+#timer { font-size: 2.5em; font-weight: bold; background: #2979ff; padding: 8px 25px; border-radius: 10px; }
+#board { display: grid; gap: 8px; margin: 20px 0; }
+.cell { width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 1.8em; font-weight: bold; background: #1a3a6b; border-radius: 50%; }
+#players-area { margin: 15px 0; width: 100%; max-width: 500px; }
+#players-area h3 { margin-bottom: 8px; }
+/* Results */
+#results h2 { color: #2979ff; margin: 20px 0 10px; }
+#race-track { width: 100%; margin: 20px 0; }
+.race-lane { display: flex; align-items: center; margin: 8px 0; height: 50px; position: relative; background: #112240; border-radius: 25px; overflow: hidden; }
+.race-lane .track-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(90deg, transparent, transparent 48px, #1a3a6b33 48px, #1a3a6b33 50px); }
+.race-avatar { position: absolute; left: 3px; height: 44px; width: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5em; transition: left 0.6s ease-out; margin: 3px; z-index: 1; }
+.race-name { position: absolute; right: 10px; font-size: 0.85em; font-weight: bold; z-index: 1; opacity: 0.9; }
+.race-score { position: absolute; left: 55px; font-size: 0.9em; font-weight: bold; z-index: 1; color: #2979ff; }
+.finish-line { position: absolute; right: 0; top: 0; bottom: 0; width: 4px; background: repeating-linear-gradient(0deg, #fff, #fff 5px, #000 5px, #000 10px); z-index: 0; }
+#word-reveal h3 { margin: 15px 0 8px; color: #2979ff; }
+#reveal-stream { display: flex; flex-wrap: wrap; gap: 6px; max-height: 200px; overflow-y: auto; padding: 10px 0; }
+.word-common { background: #1a3a6b; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; }
+.word-unique { background: #2979ff33; border: 1px solid #2979ff; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; }
+#waiting-msg { font-size: 1.2em; opacity: 0.7; margin: 20px 0; }
+</style>
+</head>
+<body>
+<h1>🎲 Boggle Party</h1>
+
+<div id="lobby" class="active">
+  <div id="qr-section">
+    <div id="room-code" style="font-size:2em;font-weight:bold;color:#2979ff;letter-spacing:4px;margin-bottom:5px;"></div>
+    <div id="join-url"></div>
+    <img id="qr-img" style="margin:10px auto;width:200px;height:200px;">
+  </div>
+  <div id="settings-display"></div>
+  <div id="waiting-msg">Waiting for players to join...</div>
+  <div id="players-area"><h3>Players</h3><div id="players"></div></div>
+</div>
+
+<div id="game">
+  <div id="game-header">
+    <span id="timer">3:00</span>
+    <span id="player-count"></span>
+  </div>
+  <div id="board"></div>
+  <div id="players-area-game"><h3>Scoreboard</h3><div id="players-game"></div></div>
+</div>
+
+<div id="results">
+  <h2>🏁 Race Results!</h2>
+  <div id="race-track"></div>
+  <div id="word-reveal"></div>
+  <div id="waiting-restart" style="opacity:0.7;margin-top:15px;">Waiting for host to start next round...</div>
+</div>
+
+<script>
+let ws, players = [];
+const AVATARS = ['🦆', '🐸', '🦊', '🐙', '🦄', '🐢', '🦩', '🐧'];
+const COLORS = ['#e53935', '#43a047', '#fb8c00', '#8e24aa', '#00acc1', '#f4511e', '#3949ab', '#d81b60'];
+
+let roomCode = '';
+
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: 'create-room' }));
+  };
+  ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
+  ws.onclose = () => setTimeout(connect, 2000);
+}
+
+function handleMessage(msg) {
+  switch (msg.type) {
+    case 'room-created':
+      roomCode = msg.code;
+      const joinUrl = `${location.origin}/play?room=${msg.code}`;
+      document.getElementById('join-url').textContent = joinUrl;
+      document.getElementById('room-code').textContent = `Room: ${msg.code}`;
+      document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
+      updateSettings(msg);
+      break;
+    case 'room-state':
+      updateSettings(msg);
+      players = msg.players || [];
+      renderPlayers();
+      if (msg.state === 'playing') showGame(msg);
+      break;
+    case 'player-joined':
+    case 'player-left':
+    case 'score-update':
+    case 'host-changed':
+      players = msg.players;
+      renderPlayers();
+      break;
+    case 'game-start':
+      showGame(msg);
+      break;
+    case 'tick':
+      updateTimer(msg.timeLeft);
+      break;
+    case 'game-end':
+      showResults(msg.results);
+      break;
+    case 'new-round':
+      players = msg.players;
+      updateSettings(msg);
+      renderPlayers();
+      showLobby();
+      break;
+  }
+}
+
+function updateSettings(msg) {
+  document.getElementById('settings-display').textContent = `Grid: ${msg.gridSize}×${msg.gridSize} | Min letters: ${msg.minWordLen} | Timer: ${msg.duration || msg.timeLeft}s`;
+}
+
+function renderPlayers() {
+  const html = players.map(p => `<div class="player-row"><span class="player-name">${p.name}${p.isHost ? '<span class="host-badge">HOST</span>' : ''}</span><span class="player-words">${p.wordCount} words</span><span class="player-score">${p.score} pts</span></div>`).join('');
+  const el1 = document.getElementById('players');
+  const el2 = document.getElementById('players-game');
+  if (el1) el1.innerHTML = html;
+  if (el2) el2.innerHTML = html;
+  const countEl = document.getElementById('player-count');
+  if (countEl) countEl.textContent = `${players.length} player${players.length !== 1 ? 's' : ''}`;
+  if (players.length > 0) document.getElementById('waiting-msg').textContent = 'Waiting for host to start...';
+}
+
+function showLobby() {
+  document.getElementById('lobby').classList.add('active');
+  document.getElementById('game').classList.remove('active');
+  document.getElementById('results').classList.remove('active');
+}
+
+function showGame(msg) {
+  document.getElementById('lobby').classList.remove('active');
+  document.getElementById('results').classList.remove('active');
+  document.getElementById('game').classList.add('active');
+  const el = document.getElementById('board');
+  el.style.gridTemplateColumns = `repeat(${msg.gridSize}, 70px)`;
+  el.innerHTML = msg.board.map(l => `<div class="cell">${l === 'Q' ? 'Qu' : l}</div>`).join('');
+  updateTimer(msg.timeLeft);
+}
+
+function updateTimer(timeLeft) {
+  const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+  document.getElementById('timer').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function showResults(results) {
+  document.getElementById('game').classList.remove('active');
+  document.getElementById('results').classList.add('active');
+  const entries = Object.entries(results).sort((a, b) => b[1].score - a[1].score);
+  const maxScore = entries.length > 0 ? entries[0][1].score : 1;
+
+  const trackEl = document.getElementById('race-track');
+  trackEl.innerHTML = entries.map(([name, data], i) => `
+    <div class="race-lane">
+      <div class="track-bg"></div>
+      <div class="finish-line"></div>
+      <div class="race-avatar" id="avatar-${i}" style="background:${COLORS[i % COLORS.length]};left:3px;">${AVATARS[i % AVATARS.length]}</div>
+      <span class="race-score" id="score-${i}">0 pts</span>
+      <span class="race-name">${name}</span>
+    </div>
+  `).join('');
+
+  // Build word sequence
+  const allWords = {};
+  entries.forEach(([name, data]) => {
+    data.words.forEach(w => { if (!allWords[w]) allWords[w] = []; allWords[w].push(name); });
+  });
+  const commonWords = Object.entries(allWords).filter(([, p]) => p.length > 1).sort((a, b) => a[0].length - b[0].length);
+  const uniqueByPlayer = {};
+  entries.forEach(([name]) => { uniqueByPlayer[name] = []; });
+  Object.entries(allWords).forEach(([w, p]) => { if (p.length === 1) uniqueByPlayer[p[0]].push(w); });
+  Object.values(uniqueByPlayer).forEach(arr => arr.sort((a, b) => a.length - b.length));
+
+  const sequence = [];
+  commonWords.forEach(([w, p]) => sequence.push({ word: w, players: p, type: 'common' }));
+  entries.forEach(([name]) => { uniqueByPlayer[name].forEach(w => sequence.push({ word: w, players: [name], type: 'unique' })); });
+
+  const runningScores = {};
+  entries.forEach(([name]) => { runningScores[name] = 0; });
+
+  const revealEl = document.getElementById('word-reveal');
+  revealEl.innerHTML = '<h3>📋 Revealing Words...</h3><div id="reveal-stream"></div>';
+  const streamEl = document.getElementById('reveal-stream');
+
+  let idx = 0;
+  function revealNext() {
+    if (idx >= sequence.length) {
+      if (entries.length > 0) streamEl.innerHTML += `<div style="text-align:center;margin-top:20px;font-size:1.5em;color:#ffd700;width:100%;">👑 ${entries[0][0]} wins!</div>`;
+      return;
+    }
+    const item = sequence[idx];
+    const pts = [0,0,0,1,1,2,3,5,11][Math.min(item.word.length, 8)];
+    const pill = document.createElement('span');
+    pill.className = item.type === 'common' ? 'word-common' : 'word-unique';
+    pill.innerHTML = item.type === 'common'
+      ? `${item.word} <small>(${item.players.map(p => AVATARS[entries.findIndex(e => e[0] === p) % AVATARS.length]).join('')})</small>`
+      : `${item.word} <small>${AVATARS[entries.findIndex(e => e[0] === item.players[0]) % AVATARS.length]}</small>`;
+    pill.style.opacity = '0'; pill.style.transition = 'opacity 0.3s';
+    streamEl.appendChild(pill);
+    setTimeout(() => pill.style.opacity = '1', 50);
+    item.players.forEach(name => {
+      runningScores[name] += pts;
+      const i = entries.findIndex(e => e[0] === name);
+      const pct = maxScore > 0 ? (runningScores[name] / maxScore) * 85 : 0;
+      document.getElementById(`avatar-${i}`).style.left = `calc(${pct}% - 22px + 3px)`;
+      document.getElementById(`score-${i}`).textContent = `${runningScores[name]} pts`;
+    });
+    streamEl.scrollTop = streamEl.scrollHeight;
+    idx++;
+    setTimeout(revealNext, 800);
+  }
+  setTimeout(revealNext, 1000);
+}
+
+connect();
+</script>
+</body>
+</html>

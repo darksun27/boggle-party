@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Boggle Party - Play</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0a1628; --surface: #112240; --cell: #1a3a6b; --cell-selected: #2979ff;
+  --text: #e0e8f8; --accent: #2979ff; --trail: #1a237e; --btn: #2979ff; --btn-hover: #1565c0;
+}
+[data-theme="light"] {
+  --bg: #dce8f8; --surface: #eaf2ff; --cell: #b3d1ff; --cell-selected: #2979ff;
+  --text: #0a1628; --accent: #1565c0; --trail: #90caf9; --btn: #1565c0; --btn-hover: #0d47a1;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 15px; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
+h2 { color: var(--accent); margin-bottom: 10px; font-size: 1.3em; }
+#join-screen, #lobby, #game, #ended { display: none; flex-direction: column; align-items: center; width: 100%; }
+#join-screen.active, #lobby.active, #game.active, #ended.active { display: flex; }
+input { padding: 12px; border-radius: 8px; border: 2px solid var(--cell); background: var(--surface); color: var(--text); font-size: 1.1em; width: 200px; text-align: center; margin: 8px 0; }
+button { padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; background: var(--btn); color: #fff; margin: 8px; }
+button:hover { background: var(--btn-hover); }
+select { padding: 6px 12px; border-radius: 6px; border: none; background: var(--cell); color: var(--text); font-size: 1em; }
+#host-controls { background: var(--surface); padding: 15px; border-radius: 10px; margin: 15px 0; width: 100%; max-width: 320px; }
+#host-controls h3 { margin-bottom: 10px; color: #ffd700; font-size: 1em; }
+#host-controls label { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 0.9em; }
+.host-badge { background: #ffd700; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; }
+#header { display: flex; justify-content: space-between; width: 100%; max-width: 400px; align-items: center; margin-bottom: 8px; }
+#timer { font-size: 1.3em; font-weight: bold; background: var(--accent); padding: 4px 12px; border-radius: 6px; color: #fff; }
+#score { font-size: 1.2em; }
+#board { display: grid; gap: 10px; margin: 10px 0; position: relative; }
+#board svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.cell { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 1.6em; font-weight: bold; background: var(--cell); border-radius: 50%; user-select: none; border: 3px solid transparent; transition: all 0.12s; touch-action: none; position: relative; z-index: 2; color: var(--text); }
+.cell.selected { background: var(--cell-selected); border-color: #fff; transform: scale(1.1); color: #fff; }
+.cell.hint { background: #ffd70088; border-color: #ffd700; transform: scale(1.05); }
+#current-word { font-size: 1.3em; margin: 8px 0; min-height: 1.3em; letter-spacing: 2px; color: var(--accent); }
+#message { min-height: 1.2em; font-size: 0.9em; margin: 4px 0; }
+.success { color: #4caf50; }
+.error { color: #f44336; }
+#my-words { margin-top: 10px; max-height: 80px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+#my-words span { background: var(--surface); padding: 3px 8px; border-radius: 4px; font-size: 0.8em; }
+#lobby-info { opacity: 0.7; margin: 10px 0; text-align: center; }
+#theme-toggle { position: fixed; top: 10px; right: 10px; background: none; color: var(--text); font-size: 1.3em; padding: 4px 8px; margin: 0; }
+#hint-btn { display: none; background: #ffd700; color: #000; }
+</style>
+</head>
+<body>
+<button id="theme-toggle" onclick="toggleTheme()">🌙</button>
+
+<div id="join-screen" class="active">
+  <h2>🎲 Join Game</h2>
+  <input id="name-input" placeholder="Your name" maxlength="12">
+  <button onclick="joinRoom()">Join</button>
+  <div id="join-error" style="color:#f44336;margin-top:8px;"></div>
+</div>
+
+<div id="lobby">
+  <h2>🎲 Lobby</h2>
+  <div id="lobby-info">Waiting for host to start...</div>
+  <div id="host-controls" style="display:none;">
+    <h3>👑 You are the Host</h3>
+    <label>Grid: <select id="cfg-size"><option value="4">4×4</option><option value="5">5×5</option><option value="6">6×6</option></select></label>
+    <label>Min letters: <select id="cfg-minlen"><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></label>
+    <label>Timer: <select id="cfg-timer"><option value="30">30s</option><option value="60">60s</option><option value="90">90s</option><option value="120">2min</option><option value="180" selected>3min</option></select></label>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+</div>
+
+<div id="game">
+  <div id="header">
+    <span id="timer">3:00</span>
+    <button id="hint-btn" onclick="requestHint()">💡 Hint</button>
+    <span id="score">0 pts</span>
+  </div>
+  <div id="board"></div>
+  <div id="current-word">&nbsp;</div>
+  <div id="message">&nbsp;</div>
+  <div id="my-words"></div>
+</div>
+
+<div id="ended">
+  <h2>⏰ Time's up!</h2>
+  <div style="margin:15px 0;font-size:1.2em;" id="final-score"></div>
+  <div style="opacity:0.7;margin-bottom:15px;">Check the main screen for results!</div>
+  <div id="host-end-controls" style="display:none;">
+    <h3 style="color:#ffd700;margin-bottom:10px;">👑 Host Controls</h3>
+    <label>Grid: <select id="cfg-size2"><option value="4">4×4</option><option value="5">5×5</option><option value="6">6×6</option></select></label>
+    <label>Min letters: <select id="cfg-minlen2"><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></label>
+    <label>Timer: <select id="cfg-timer2"><option value="30">30s</option><option value="60">60s</option><option value="90">90s</option><option value="120">2min</option><option value="180" selected>3min</option></select></label>
+    <button onclick="restartGame()">Play Again</button>
+  </div>
+</div>
+
+<script>
+let ws, board = [], gridSize = 4, minWordLen = 3, selected = [], dragging = false, myScore = 0, myWords = [];
+let myName = '', isHost = false;
+let DICT = null;
+fetch('https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt')
+  .then(r => r.text())
+  .then(t => { DICT = new Set(t.split('\n').map(w => w.trim().toLowerCase()).filter(w => w.length >= 3)); })
+  .catch(() => {});
+
+function getWsUrl() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${proto}//${location.host}`;
+}
+
+function joinRoom() {
+  const name = document.getElementById('name-input').value.trim() || 'Anon';
+  const code = new URLSearchParams(location.search).get('room') || '';
+  if (!code) { document.getElementById('join-error').textContent = 'No room code in URL. Scan the QR code from the display screen.'; return; }
+  ws = new WebSocket(getWsUrl());
+  ws.onopen = () => ws.send(JSON.stringify({ type: 'join', name, code }));
+  ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
+}
+
+function handleMessage(msg) {
+  switch (msg.type) {
+    case 'error':
+      document.getElementById('join-error').textContent = msg.message;
+      break;
+    case 'joined':
+      myName = msg.name;
+      isHost = msg.isHost;
+      gridSize = msg.gridSize;
+      minWordLen = msg.minWordLen;
+      document.getElementById('join-screen').classList.remove('active');
+      if (msg.state === 'playing') {
+        board = msg.board;
+        showGame(msg.timeLeft);
+      } else {
+        showLobby();
+      }
+      break;
+    case 'player-joined':
+    case 'player-left':
+    case 'host-changed':
+      if (msg.hostName === myName) { isHost = true; } else { isHost = false; }
+      updateHostUI();
+      break;
+    case 'game-start':
+      board = msg.board;
+      gridSize = msg.gridSize;
+      minWordLen = msg.minWordLen;
+      showGame(msg.timeLeft);
+      break;
+    case 'tick':
+      updateTimer(msg.timeLeft);
+      break;
+    case 'word-result':
+      showWordResult(msg);
+      break;
+    case 'game-end':
+      showEnded(msg);
+      break;
+    case 'new-round':
+      gridSize = msg.gridSize;
+      minWordLen = msg.minWordLen;
+      myScore = 0; myWords = [];
+      showLobby();
+      break;
+  }
+}
+
+function showLobby() {
+  hideAll();
+  document.getElementById('lobby').classList.add('active');
+  updateHostUI();
+}
+
+function showGame(timeLeft) {
+  hideAll();
+  document.getElementById('game').classList.add('active');
+  myScore = 0; myWords = []; currentHint = null;
+  document.getElementById('score').textContent = '0 pts';
+  document.getElementById('my-words').innerHTML = '';
+  document.getElementById('message').textContent = '\u00A0';
+  document.getElementById('hint-btn').style.display = 'none';
+  renderBoard();
+  updateTimer(timeLeft);
+  setupDrag();
+  findBoardWords();
+  resetHintTimer();
+}
+
+function showEnded(msg) {
+  hideAll();
+  document.getElementById('ended').classList.add('active');
+  document.getElementById('final-score').textContent = `Your score: ${myScore} pts (${myWords.length} words)`;
+  document.getElementById('host-end-controls').style.display = isHost ? '' : 'none';
+}
+
+function hideAll() {
+  ['join-screen', 'lobby', 'game', 'ended'].forEach(id => document.getElementById(id).classList.remove('active'));
+}
+
+function updateHostUI() {
+  document.getElementById('host-controls').style.display = isHost ? '' : 'none';
+  document.getElementById('lobby-info').textContent = isHost ? 'Configure and start the game!' : 'Waiting for host to start...';
+}
+
+function startGame() {
+  ws.send(JSON.stringify({ type: 'start-game' }));
+}
+
+function restartGame() {
+  const gridSize = parseInt(document.getElementById('cfg-size2').value);
+  const minWordLen = parseInt(document.getElementById('cfg-minlen2').value);
+  const duration = parseInt(document.getElementById('cfg-timer2').value);
+  ws.send(JSON.stringify({ type: 'restart', gridSize, minWordLen, duration }));
+}
+
+function renderBoard() {
+  const el = document.getElementById('board');
+  el.style.gridTemplateColumns = `repeat(${gridSize}, 60px)`;
+  el.innerHTML = board.map((l, i) => `<div class="cell" data-idx="${i}">${l === 'Q' ? 'Qu' : l}</div>`).join('');
+}
+
+function updateTimer(timeLeft) {
+  const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+  document.getElementById('timer').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function getAdj(idx) {
+  const r = Math.floor(idx / gridSize), c = idx % gridSize, adj = [];
+  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+    if (!dr && !dc) continue;
+    const nr = r + dr, nc = c + dc;
+    if (nr >= 0 && nr < gridSize && nc >= 0 && nc < gridSize) adj.push(nr * gridSize + nc);
+  }
+  return adj;
+}
+
+function getCellFromPoint(x, y) {
+  const el = document.elementFromPoint(x, y);
+  if (el && el.classList.contains('cell')) return parseInt(el.dataset.idx);
+  return -1;
+}
+
+function onDragStart(idx) {
+  dragging = true;
+  selected = [idx];
+  updateUI();
+}
+
+function onDragMove(x, y) {
+  if (!dragging) return;
+  const idx = getCellFromPoint(x, y);
+  if (idx < 0) return;
+  if (selected.length >= 2 && idx === selected[selected.length - 2]) { selected.pop(); updateUI(); return; }
+  if (selected.includes(idx)) return;
+  if (getAdj(selected[selected.length - 1]).includes(idx)) { selected.push(idx); updateUI(); }
+}
+
+function onDragEnd() {
+  if (!dragging) return;
+  dragging = false;
+  if (selected.length > 0) ws.send(JSON.stringify({ type: 'submit-word', path: selected }));
+  selected = [];
+  updateUI();
+}
+
+function updateUI() {
+  document.querySelectorAll('.cell').forEach((el, i) => el.classList.toggle('selected', selected.includes(i)));
+  const word = selected.map(i => board[i] === 'Q' ? 'QU' : board[i]).join('');
+  document.getElementById('current-word').textContent = word || '\u00A0';
+  drawTrail();
+}
+
+function drawTrail() {
+  const boardEl = document.getElementById('board');
+  let svg = boardEl.querySelector('svg');
+  if (!svg) { svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); boardEl.appendChild(svg); }
+  svg.innerHTML = '';
+  if (selected.length < 2) return;
+  const boardRect = boardEl.getBoundingClientRect();
+  const points = selected.map(idx => {
+    const cell = boardEl.querySelector(`[data-idx="${idx}"]`);
+    const r = cell.getBoundingClientRect();
+    return `${r.left + r.width / 2 - boardRect.left},${r.top + r.height / 2 - boardRect.top}`;
+  });
+  const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+  polyline.setAttribute('points', points.join(' '));
+  polyline.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--trail').trim());
+  polyline.setAttribute('stroke-width', '16');
+  polyline.setAttribute('stroke-linecap', 'round');
+  polyline.setAttribute('stroke-linejoin', 'round');
+  polyline.setAttribute('fill', 'none');
+  svg.appendChild(polyline);
+}
+
+let dragSetup = false;
+function setupDrag() {
+  if (dragSetup) return;
+  dragSetup = true;
+  const boardEl = document.getElementById('board');
+  boardEl.addEventListener('mousedown', e => { const c = e.target.closest('.cell'); if (c) { e.preventDefault(); onDragStart(parseInt(c.dataset.idx)); } });
+  document.addEventListener('mousemove', e => { if (dragging) onDragMove(e.clientX, e.clientY); });
+  document.addEventListener('mouseup', () => onDragEnd());
+  boardEl.addEventListener('touchstart', e => { const c = e.target.closest('.cell'); if (c) { e.preventDefault(); onDragStart(parseInt(c.dataset.idx)); } }, { passive: false });
+  document.addEventListener('touchmove', e => { if (dragging) { e.preventDefault(); const t = e.touches[0]; onDragMove(t.clientX, t.clientY); } }, { passive: false });
+  document.addEventListener('touchend', () => onDragEnd());
+}
+
+function showWordResult(msg) {
+  const el = document.getElementById('message');
+  if (msg.valid) {
+    myScore = msg.totalScore;
+    myWords.push(msg.word);
+    document.getElementById('score').textContent = `${myScore} pts`;
+    el.className = 'success';
+    el.textContent = `✓ ${msg.word} +${msg.points}`;
+    document.getElementById('my-words').innerHTML += `<span>${msg.word}</span>`;
+    currentHint = null;
+    resetHintTimer();
+  } else {
+    el.className = 'error';
+    el.textContent = msg.reason;
+    resetHintTimer();
+  }
+  setTimeout(() => { el.textContent = '\u00A0'; }, 2000);
+}
+
+// Theme toggle
+function toggleTheme() {
+  const html = document.documentElement;
+  const isLight = html.getAttribute('data-theme') === 'light';
+  html.setAttribute('data-theme', isLight ? 'dark' : 'light');
+  document.getElementById('theme-toggle').textContent = isLight ? '🌙' : '☀️';
+}
+
+// Hint system
+let hintTimer = null, boardWords = [], currentHint = null;
+
+function findBoardWords() {
+  boardWords = [];
+  if (!DICT) return;
+  const size = gridSize;
+  const visited = new Array(size * size).fill(false);
+  function dfs(idx, path, word) {
+    const w = word.toLowerCase();
+    if (w.length >= minWordLen && w.length <= 8 && DICT.has(w) && !boardWords.some(b => b.word === w)) {
+      boardWords.push({ word: w, path: [...path] });
+    }
+    if (w.length >= 8) return;
+    for (const adj of getAdj(idx)) {
+      if (!visited[adj]) {
+        visited[adj] = true;
+        path.push(adj);
+        dfs(adj, path, word + (board[adj] === 'Q' ? 'QU' : board[adj]));
+        path.pop();
+        visited[adj] = false;
+      }
+    }
+  }
+  for (let i = 0; i < board.length; i++) {
+    visited[i] = true;
+    dfs(i, [i], board[i] === 'Q' ? 'QU' : board[i]);
+    visited[i] = false;
+  }
+}
+
+function resetHintTimer() {
+  if (hintTimer) clearTimeout(hintTimer);
+  document.getElementById('hint-btn').style.display = 'none';
+  hintTimer = setTimeout(() => {
+    const remaining = boardWords.filter(w => !myWords.includes(w.word.toUpperCase()));
+    if (remaining.length > 0) document.getElementById('hint-btn').style.display = '';
+  }, 7000);
+}
+
+function requestHint() {
+  document.getElementById('hint-btn').style.display = 'none';
+  const remaining = boardWords.filter(w => !myWords.includes(w.word.toUpperCase()));
+  if (remaining.length === 0) return;
+  if (currentHint && !myWords.includes(currentHint.word.toUpperCase())) {
+    // reuse
+  } else {
+    const minLen = Math.min(...remaining.map(w => w.word.length));
+    const shortest = remaining.filter(w => w.word.length === minLen);
+    currentHint = shortest[Math.floor(Math.random() * shortest.length)];
+  }
+  const { path } = currentHint;
+  path.forEach((idx, i) => {
+    setTimeout(() => document.querySelector(`[data-idx="${idx}"]`).classList.add('hint'), i * 200);
+  });
+  setTimeout(() => {
+    document.querySelectorAll('.cell.hint').forEach(el => el.classList.remove('hint'));
+    resetHintTimer();
+  }, path.length * 200 + 800);
+}
+</script>
+</body>
+</html>
