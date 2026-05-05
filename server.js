@@ -117,7 +117,7 @@ function startGame(room) {
   room.state = 'playing';
   room.timeLeft = room.duration;
   Object.values(room.players).forEach(p => { p.words = []; p.score = 0; });
-  broadcastAll(room, { type: 'game-start', board: room.board, gridSize: room.gridSize, minWordLen: room.minWordLen, timeLeft: room.timeLeft });
+  broadcastAll(room, { type: 'game-start', board: room.board, gridSize: room.gridSize, minWordLen: room.minWordLen, duration: room.duration, timeLeft: room.timeLeft });
   room.timer = setInterval(() => {
     room.timeLeft--;
     if (room.timeLeft <= 0) {
@@ -203,7 +203,20 @@ wss.on('connection', (ws) => {
       case 'start-game': {
         if (!room || playerName !== room.hostName) return;
         if (room.state === 'playing') return;
+        if (msg.gridSize) room.gridSize = msg.gridSize;
+        if (msg.minWordLen) room.minWordLen = msg.minWordLen;
+        if (msg.duration) room.duration = msg.duration;
+        room.board = generateBoard(room.gridSize);
         startGame(room);
+        break;
+      }
+      case 'update-settings': {
+        if (!room || playerName !== room.hostName) return;
+        if (room.state === 'playing') return;
+        if (msg.gridSize) room.gridSize = msg.gridSize;
+        if (msg.minWordLen) room.minWordLen = msg.minWordLen;
+        if (msg.duration) room.duration = msg.duration;
+        sendToDisplay(room, { type: 'settings-changed', gridSize: room.gridSize, minWordLen: room.minWordLen, duration: room.duration });
         break;
       }
       case 'restart': {

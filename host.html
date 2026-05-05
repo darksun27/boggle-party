@@ -57,6 +57,7 @@ h1 { color: #2979ff; margin-bottom: 10px; }
 <div id="game">
   <div id="game-header">
     <span id="timer">3:00</span>
+    <span id="game-settings"></span>
     <span id="player-count"></span>
   </div>
   <div id="board"></div>
@@ -113,6 +114,9 @@ function handleMessage(msg) {
     case 'game-start':
       showGame(msg);
       break;
+    case 'settings-changed':
+      updateSettings(msg);
+      break;
     case 'tick':
       updateTimer(msg.timeLeft);
       break;
@@ -129,7 +133,10 @@ function handleMessage(msg) {
 }
 
 function updateSettings(msg) {
-  document.getElementById('settings-display').textContent = `Grid: ${msg.gridSize}×${msg.gridSize} | Min letters: ${msg.minWordLen} | Timer: ${msg.duration || msg.timeLeft}s`;
+  const text = `Grid: ${msg.gridSize}×${msg.gridSize} | Min: ${msg.minWordLen} letters | Timer: ${msg.duration || msg.timeLeft}s`;
+  document.getElementById('settings-display').textContent = text;
+  const gs = document.getElementById('game-settings');
+  if (gs) gs.textContent = text;
 }
 
 function renderPlayers() {
@@ -150,6 +157,7 @@ function showLobby() {
 }
 
 function showGame(msg) {
+  updateSettings(msg);
   document.getElementById('lobby').classList.remove('active');
   document.getElementById('results').classList.remove('active');
   document.getElementById('game').classList.add('active');

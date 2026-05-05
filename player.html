@@ -42,7 +42,7 @@ select { padding: 6px 12px; border-radius: 6px; border: none; background: var(--
 #my-words span { background: var(--surface); padding: 3px 8px; border-radius: 4px; font-size: 0.8em; }
 #lobby-info { opacity: 0.7; margin: 10px 0; text-align: center; }
 #theme-toggle { align-self: flex-end; background: none; color: var(--text); font-size: 1.3em; padding: 4px 8px; margin: 0 0 5px 0; }
-#hint-btn { display: none; background: #ffd700; color: #000; }
+#hint-btn { background: #ffd700; color: #000; }
 </style>
 </head>
 <body>
@@ -60,9 +60,9 @@ select { padding: 6px 12px; border-radius: 6px; border: none; background: var(--
   <div id="lobby-info">Waiting for host to start...</div>
   <div id="host-controls" style="display:none;">
     <h3>👑 You are the Host</h3>
-    <label>Grid: <select id="cfg-size"><option value="4">4×4</option><option value="5">5×5</option><option value="6">6×6</option></select></label>
-    <label>Min letters: <select id="cfg-minlen"><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></label>
-    <label>Timer: <select id="cfg-timer"><option value="30">30s</option><option value="60">60s</option><option value="90">90s</option><option value="120">2min</option><option value="180" selected>3min</option></select></label>
+    <label>Grid: <select id="cfg-size" onchange="sendSettings()"><option value="4">4×4</option><option value="5">5×5</option><option value="6">6×6</option></select></label>
+    <label>Min letters: <select id="cfg-minlen" onchange="sendSettings()"><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></label>
+    <label>Timer: <select id="cfg-timer" onchange="sendSettings()"><option value="30">30s</option><option value="60">60s</option><option value="90">90s</option><option value="120">2min</option><option value="180" selected>3min</option></select></label>
     <button onclick="startGame()">Start Game</button>
   </div>
 </div>
@@ -70,7 +70,7 @@ select { padding: 6px 12px; border-radius: 6px; border: none; background: var(--
 <div id="game">
   <div id="header">
     <span id="timer">3:00</span>
-    <button id="hint-btn" onclick="requestHint()">💡 Hint</button>
+    <button id="hint-btn" style="display:none" onclick="requestHint()">💡 Hint</button>
     <span id="score">0 pts</span>
   </div>
   <div id="board"></div>
@@ -201,7 +201,18 @@ function updateHostUI() {
 }
 
 function startGame() {
-  ws.send(JSON.stringify({ type: 'start-game' }));
+  const gridSize = parseInt(document.getElementById('cfg-size').value);
+  const minWordLen = parseInt(document.getElementById('cfg-minlen').value);
+  const duration = parseInt(document.getElementById('cfg-timer').value);
+  ws.send(JSON.stringify({ type: 'start-game', gridSize, minWordLen, duration }));
+}
+
+function sendSettings() {
+  if (!isHost || !ws) return;
+  const gridSize = parseInt(document.getElementById('cfg-size').value);
+  const minWordLen = parseInt(document.getElementById('cfg-minlen').value);
+  const duration = parseInt(document.getElementById('cfg-timer').value);
+  ws.send(JSON.stringify({ type: 'update-settings', gridSize, minWordLen, duration }));
 }
 
 function restartGame() {
@@ -336,7 +347,6 @@ let hintTimer = null, boardWords = [], currentHint = null;
 function findBoardWords() {
   boardWords = [];
   if (!DICT) {
-    // Retry in 1s if dictionary hasn't loaded yet
     setTimeout(findBoardWords, 1000);
     return;
   }
@@ -363,6 +373,8 @@ function findBoardWords() {
     dfs(i, [i], board[i] === 'Q' ? 'QU' : board[i]);
     visited[i] = false;
   }
+  console.log('Board words found:', boardWords.length);
+  resetHintTimer();
 }
 
 function resetHintTimer() {
@@ -370,7 +382,8 @@ function resetHintTimer() {
   document.getElementById('hint-btn').style.display = 'none';
   hintTimer = setTimeout(() => {
     const remaining = boardWords.filter(w => !myWords.includes(w.word.toUpperCase()));
-    if (remaining.length > 0) document.getElementById('hint-btn').style.display = '';
+    console.log('Hint check:', boardWords.length, 'total,', remaining.length, 'remaining');
+    if (remaining.length > 0) document.getElementById('hint-btn').style.display = 'inline-block';
   }, 7000);
 }
 
