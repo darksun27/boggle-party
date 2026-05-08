@@ -79,6 +79,7 @@ function createRoom() {
     timer: null,
     timeLeft: DEFAULT_DURATION,
     state: 'lobby',
+    typing: new Set(),
   };
   return rooms[code];
 }
@@ -100,9 +101,11 @@ function sendTo(ws, msg) {
 }
 
 function getPlayerList(room) {
-  return Object.entries(room.players).map(([name, p]) => ({
-    name, score: p.score, wordCount: p.words.length, isHost: name === room.hostName
-  }));
+  return Object.entries(room.players)
+    .filter(([, p]) => p.ws && p.ws.readyState === 1)
+    .map(([name, p]) => ({
+      name, score: p.score, wordCount: p.words.length, isHost: name === room.hostName
+    }));
 }
 
 function assignHost(room) {
@@ -183,6 +186,14 @@ wss.on('connection', (ws) => {
         sendTo(ws, { type: 'room-created', code: room.code, gridSize: room.gridSize, minWordLen: room.minWordLen, duration: room.duration });
         break;
       }
+      case 'joining': {
+        const r = rooms[msg.code && msg.code.toUpperCase()];
+        if (!r) return;
+        room = r;
+        r.typing.add(ws);
+        sendToDisplay(r, { type: 'typing-update', count: r.typing.size });
+        break;
+      }
       case 'join': {
         const r = rooms[msg.code && msg.code.toUpperCase()];
         if (!r) { sendTo(ws, { type: 'error', message: 'Room not found' }); return; }
@@ -190,14 +201,33 @@ wss.on('connection', (ws) => {
         room = r;
         role = 'player';
         playerName = msg.name || `Player${Object.keys(room.players).length + 1}`;
-        if (room.players[playerName] && room.players[playerName].ws && room.players[playerName].ws.readyState === 1) {
+        // Reconnection: if player exists but disconnected, restore them
+        if (room.players[playerName] && (!room.players[playerName].ws || room.players[playerName].ws.readyState !== 1)) {
+          room.players[playerName].ws = ws;
+        } else if (room.players[playerName] && room.players[playerName].ws && room.players[playerName].ws.readyState === 1) {
           playerName += Math.floor(Math.random() * 99);
+          room.players[playerName] = { ws, words: [], score: 0 };
+        } else {
+          room.players[playerName] = { ws, words: [], score: 0 };
         }
-        room.players[playerName] = { ws, words: [], score: 0 };
         if (!room.hostName) room.hostName = playerName;
         const isHostPlayer = playerName === room.hostName;
-        sendTo(ws, { type: 'joined', name: playerName, isHost: isHostPlayer, state: room.state, board: room.state === 'playing' ? room.board : null, gridSize: room.gridSize, minWordLen: room.minWordLen, duration: room.duration, timeLeft: room.timeLeft });
+        const currentState = room.state === 'paused' ? 'playing' : room.state;
+        sendTo(ws, { type: 'joined', name: playerName, isHost: isHostPlayer, state: currentState, board: (room.state === 'playing' || room.state === 'paused') ? room.board : null, gridSize: room.gridSize, minWordLen: room.minWordLen, duration: room.duration, timeLeft: room.timeLeft });
+        // Remove from typing and notify
+        room.typing.delete(ws);
         broadcastAll(room, { type: 'player-joined', players: getPlayerList(room), hostName: room.hostName });
+        sendToDisplay(room, { type: 'typing-update', count: room.typing.size });
+        // Auto-resume if game was paused
+        if (room.state === 'paused') {
+          room.state = 'playing';
+          room.timer = setInterval(() => {
+            room.timeLeft--;
+            if (room.timeLeft <= 0) { clearInterval(room.timer); room.state = 'ended'; endGame(room); }
+            else { broadcastAll(room, { type: 'tick', timeLeft: room.timeLeft }); }
+          }, 1000);
+          broadcastAll(room, { type: 'game-resumed', timeLeft: room.timeLeft });
+        }
         break;
       }
       case 'start-game': {
@@ -225,6 +255,22 @@ wss.on('connection', (ws) => {
         broadcastAll(room, { type: 'new-round', state: room.state, board: room.board, gridSize: room.gridSize, minWordLen: room.minWordLen, duration: room.duration, players: getPlayerList(room), hostName: room.hostName });
         break;
       }
+      case 'resume-game': {
+        if (!room || room.state !== 'paused') return;
+        room.state = 'playing';
+        room.timer = setInterval(() => {
+          room.timeLeft--;
+          if (room.timeLeft <= 0) {
+            clearInterval(room.timer);
+            room.state = 'ended';
+            endGame(room);
+          } else {
+            broadcastAll(room, { type: 'tick', timeLeft: room.timeLeft });
+          }
+        }, 1000);
+        broadcastAll(room, { type: 'game-resumed', timeLeft: room.timeLeft });
+        break;
+      }
       case 'submit-word': {
         if (role !== 'player' || !room || room.state !== 'playing') return;
         const { path: wordPath } = msg;
@@ -235,7 +281,7 @@ wss.on('connection', (ws) => {
         if (word.length < room.minWordLen) { sendTo(ws, { type: 'word-result', valid: false, reason: `Min ${room.minWordLen} letters` }); return; }
         if (player.words.includes(word)) { sendTo(ws, { type: 'word-result', valid: false, reason: 'Already found' }); return; }
         if (!DICT || !DICT.has(word.toLowerCase())) { sendTo(ws, { type: 'word-result', valid: false, reason: 'Not in dictionary' }); return; }
-        const pts = [0, 0, 0, 1, 1, 2, 3, 5, 11][Math.min(word.length, 8)];
+        const pts = [0, 0, 0, 2, 3, 5, 8, 13, 21][Math.min(word.length, 8)];
         player.words.push(word);
         player.score += pts;
         sendTo(ws, { type: 'word-result', valid: true, word, points: pts, totalScore: player.score });
@@ -246,8 +292,19 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('close', () => {
+    // Clean up typing state
+    if (room && room.typing && room.typing.has(ws)) {
+      room.typing.delete(ws);
+      sendToDisplay(room, { type: 'typing-update', count: room.typing.size });
+    }
     if (role === 'player' && room && playerName) {
       if (room.players[playerName]) room.players[playerName].ws = null;
+      // Pause game if mid-game
+      if (room.state === 'playing') {
+        clearInterval(room.timer);
+        room.state = 'paused';
+        broadcastAll(room, { type: 'game-paused', disconnectedPlayer: playerName, players: getPlayerList(room), hostName: room.hostName });
+      }
       if (playerName === room.hostName) {
         room.hostName = null;
         assignHost(room);
