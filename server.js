@@ -13,14 +13,11 @@ const room = require('./src/room');
 
 // --- HTTP Server ---
 
+const DIST_DIR = path.join(__dirname, 'dist');
+const hasDistBuild = fs.existsSync(DIST_DIR);
+
 const server = http.createServer((req, res) => {
   const url = req.url.split('?')[0];
-  const routes = {
-    '/': 'host.html',
-    '/host': 'host.html',
-    '/play': 'player.html',
-    '/health': null,
-  };
 
   if (url === '/health') {
     const status = { ok: true, dictLoaded: dictionary.isLoaded(), rooms: room.getRoomCount() };
@@ -29,17 +26,30 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Serve from Vite build if available
+  if (hasDistBuild) {
+    let filePath;
+    if (url === '/' || url === '/host') filePath = path.join(DIST_DIR, 'host.html');
+    else if (url === '/play') filePath = path.join(DIST_DIR, 'player.html');
+    else filePath = path.join(DIST_DIR, url);
+
+    fs.stat(filePath, (err, stat) => {
+      if (err || !stat.isFile()) { res.writeHead(404); res.end('Not found'); return; }
+      const ext = path.extname(filePath);
+      const types = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png' };
+      res.writeHead(200, { 'Content-Type': types[ext] || 'application/octet-stream', 'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=31536000, immutable' });
+      fs.createReadStream(filePath).pipe(res);
+    });
+    return;
+  }
+
+  // Fallback to legacy HTML files
+  const routes = { '/': 'host.html', '/host': 'host.html', '/play': 'player.html' };
   const file = routes[url];
   if (!file) { res.writeHead(404); res.end('Not found'); return; }
 
-  const filePath = path.join(__dirname, file);
-  fs.readFile(filePath, (err, data) => {
-    if (err) {
-      log.error('File read error', { file, error: err.message });
-      res.writeHead(500);
-      res.end('Internal server error');
-      return;
-    }
+  fs.readFile(path.join(__dirname, file), (err, data) => {
+    if (err) { res.writeHead(500); res.end('Internal server error'); return; }
     res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache' });
     res.end(data);
   });

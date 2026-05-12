@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Orbitron:wght@700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: linear-gradient(-45deg, #ff9a9e, #fad0c4, #a18cd1, #fbc2eb, #84fab0, #8fd3f4);
+  --surface: rgba(255,255,255,0.4);
+  --cell: rgba(255,255,255,0.5);
+  --cell-selected: linear-gradient(135deg, #ff4ecb, #a18cd1);
+  --text: #2d1b4e;
+  --accent: #6b21a8;
+  --trail: rgba(107,33,168,0.4);
+  --btn: linear-gradient(135deg, #6b21a8, #ff4ecb);
+  --border: rgba(255,255,255,0.6);
+  --success: #16a34a;
+  --error: #dc2626;
+}
+
+body {
+  font-family: 'Fredoka', sans-serif;
+  background: var(--bg);
+  background-size: 400% 400%;
+  animation: bgShift 12s ease infinite;
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+@keyframes bgShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
