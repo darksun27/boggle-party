@@ -13,35 +13,21 @@ export function useWebSocket(onMessage, onConnect) {
 
     function connect() {
       const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const url = `${proto}//${window.location.host}`;
-      console.log('[WS] Connecting to', url);
-      const ws = new WebSocket(url);
+      const ws = new WebSocket(`${proto}//${window.location.host}`);
 
       ws.onopen = () => {
-        console.log('[WS] Connected');
         setConnected(true);
         wsRef.current = ws;
-        if (onConnectRef.current) {
-          console.log('[WS] Calling onConnect callback');
-          onConnectRef.current(ws);
-        } else {
-          console.log('[WS] No onConnect callback set');
-        }
+        if (onConnectRef.current) onConnectRef.current(ws);
       };
 
       ws.onmessage = (e) => {
-        console.log('[WS] Received:', e.data);
-        try { onMessageRef.current(JSON.parse(e.data)); } catch (err) {
-          console.error('[WS] Parse error:', err);
-        }
+        try { onMessageRef.current(JSON.parse(e.data)); } catch {}
       };
 
-      ws.onerror = (e) => {
-        console.error('[WS] Error:', e);
-      };
+      ws.onerror = () => {};
 
-      ws.onclose = (e) => {
-        console.log('[WS] Closed, code:', e.code, 'reason:', e.reason);
+      ws.onclose = () => {
         setConnected(false);
         reconnectTimer = setTimeout(connect, 2000);
       };
@@ -58,7 +44,6 @@ export function useWebSocket(onMessage, onConnect) {
   }, []);
 
   const send = useCallback((msg) => {
-    console.log('[WS] Sending:', msg, 'readyState:', wsRef.current && wsRef.current.readyState);
     if (wsRef.current && wsRef.current.readyState === 1) {
       wsRef.current.send(JSON.stringify(msg));
     }

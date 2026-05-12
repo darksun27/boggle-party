@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useCallback } from 'react';
+import { createContext, useContext, useReducer, useCallback, useRef } from 'react';
 import { useWebSocket } from './useWebSocket';
 
 const GameContext = createContext(null);
@@ -27,7 +27,6 @@ const initialState = {
 };
 
 function reducer(state, action) {
-  console.log('[Reducer]', action.type, action);
   switch (action.type) {
     case 'ROOM_CREATED':
       return { ...state, screen: 'lobby', roomCode: action.code, gridSize: action.gridSize, minWordLen: action.minWordLen, duration: action.duration };
@@ -94,10 +93,11 @@ export function GameProvider({ children, role }) {
     }
   }, []);
 
+  const roomCreated = useRef(false);
+
   const onConnect = useCallback((ws) => {
-    console.log('[Game] onConnect fired, role:', role);
-    if (role === 'host') {
-      console.log('[Game] Sending create-room directly on ws');
+    if (role === 'host' && !roomCreated.current) {
+      roomCreated.current = true;
       ws.send(JSON.stringify({ type: 'create-room' }));
     }
   }, [role]);
