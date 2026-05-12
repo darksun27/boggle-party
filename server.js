@@ -35,33 +35,74 @@ async function loadDict() {
 const FILL_LETTERS = 'AAABCDEEEFGHIIIJKLMNOOOPQRSTUUVWXYZ';
 
 function generateBoard(size) {
-  const board = new Array(size * size).fill(null);
+  const MIN_WORDS = 20;
 
-  // Try to place words on the board
-  const wordsPlaced = [];
-  const maxAttempts = 100;
+  for (let regen = 0; regen < 20; regen++) {
+    const board = new Array(size * size).fill(null);
 
-  for (let attempt = 0; attempt < maxAttempts && wordsPlaced.length < size; attempt++) {
-    // Pick a random word that fits the board
-    const word = pickWord(size);
-    if (!word) continue;
-
-    const path = tryPlaceWord(word, board, size);
-    if (path) {
-      for (let i = 0; i < path.length; i++) {
-        board[path[i]] = word[i].toUpperCase();
+    // Place as many words as possible
+    const wordsPlaced = [];
+    for (let attempt = 0; attempt < 300 && wordsPlaced.length < 12; attempt++) {
+      const word = pickWord(size);
+      if (!word) continue;
+      const path = tryPlaceWord(word, board, size);
+      if (path) {
+        for (let i = 0; i < path.length; i++) board[path[i]] = word[i].toUpperCase();
+        wordsPlaced.push(word);
       }
-      wordsPlaced.push(word);
+    }
+
+    // Fill remaining empty cells
+    for (let i = 0; i < board.length; i++) {
+      if (!board[i]) board[i] = FILL_LETTERS[Math.floor(Math.random() * FILL_LETTERS.length)];
+    }
+
+    // Count total findable words on this board
+    const findable = countBoardWords(board, size);
+    if (findable >= MIN_WORDS) {
+      console.log(`Board generated: ${findable} findable words (placed ${wordsPlaced.length} seeds)`);
+      return board;
     }
   }
 
-  // Fill remaining empty cells with random letters
+  // Fallback: return last attempt even if under threshold
+  const board = new Array(size * size).fill(null);
+  for (let attempt = 0; attempt < 300; attempt++) {
+    const word = pickWord(size);
+    if (!word) continue;
+    const path = tryPlaceWord(word, board, size);
+    if (path) { for (let i = 0; i < path.length; i++) board[path[i]] = word[i].toUpperCase(); }
+  }
   for (let i = 0; i < board.length; i++) {
     if (!board[i]) board[i] = FILL_LETTERS[Math.floor(Math.random() * FILL_LETTERS.length)];
   }
-
-  console.log(`Board generated: placed ${wordsPlaced.length} words: ${wordsPlaced.join(', ')}`);
+  console.log(`Board generated (fallback): ${countBoardWords(board, size)} findable words`);
   return board;
+}
+
+function countBoardWords(board, size) {
+  if (!DICT) return 0;
+  const found = new Set();
+  const visited = new Array(size * size).fill(false);
+
+  function dfs(idx, word) {
+    if (word.length >= 3 && word.length <= 8 && DICT.has(word)) found.add(word);
+    if (word.length >= 8) return;
+    for (const adj of getAdj(idx, size)) {
+      if (!visited[adj]) {
+        visited[adj] = true;
+        dfs(adj, word + board[adj].toLowerCase());
+        visited[adj] = false;
+      }
+    }
+  }
+
+  for (let i = 0; i < board.length; i++) {
+    visited[i] = true;
+    dfs(i, board[i].toLowerCase());
+    visited[i] = false;
+  }
+  return found.size;
 }
 
 function pickWord(size) {
