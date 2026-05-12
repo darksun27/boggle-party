@@ -98,7 +98,7 @@ export default function GameBoard() {
       {/* Board */}
       <div
         ref={boardRef}
-        className="board grid gap-2 mb-3"
+        className="board grid gap-2 mb-3 relative"
         style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}
         onMouseDown={(e) => { const c = e.target.closest('[data-idx]'); if (c) { e.preventDefault(); onStart(parseInt(c.dataset.idx)); } }}
         onMouseMove={(e) => dragging && onMove(e.clientX, e.clientY)}
@@ -107,6 +107,25 @@ export default function GameBoard() {
         onTouchMove={(e) => { if (dragging) { e.preventDefault(); const t = e.touches[0]; onMove(t.clientX, t.clientY); } }}
         onTouchEnd={onEnd}
       >
+        {/* Trail SVG */}
+        {selected.length >= 2 && boardRef.current && (
+          <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+            <polyline
+              points={selected.map(idx => {
+                const cell = boardRef.current.querySelector(`[data-idx="${idx}"]`);
+                if (!cell) return '0,0';
+                const br = boardRef.current.getBoundingClientRect();
+                const cr = cell.getBoundingClientRect();
+                return `${cr.left + cr.width / 2 - br.left},${cr.top + cr.height / 2 - br.top}`;
+              }).join(' ')}
+              stroke="rgba(107,33,168,0.5)"
+              strokeWidth="14"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </svg>
+        )}
         {board && board.map((letter, i) => (
           <motion.div
             key={i}
