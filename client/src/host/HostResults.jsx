@@ -220,7 +220,7 @@ export default function HostResults() {
             className="fixed font-display text-4xl font-bold pointer-events-none z-50"
             style={{ left: fp.startX - 15, top: fp.startY + 20, color: '#fff', textShadow: '0 0 12px rgba(255,78,203,0.9), 0 0 24px rgba(107,33,168,0.7), 0 2px 4px rgba(0,0,0,0.5)' }}
             animate={{
-              x: [0, (fp.endX - fp.startX) * 0.5 + (fp.endX > fp.startX ? -80 : 80), fp.endX - fp.startX],
+              x: [0, (fp.endX - fp.startX) * 0.5 + (fp.endX > fp.startX ? 80 : -80), fp.endX - fp.startX],
               y: [0, (fp.endY - fp.startY) * 0.5, fp.endY - fp.startY - 20],
               scale: [1.2, 1.0, 0.6],
               opacity: [1, 1, 0.7],
@@ -260,7 +260,7 @@ export default function HostResults() {
       </AnimatePresence>
 
       {/* Bar chart - fixed to bottom */}
-      <div className="fixed bottom-0 left-0 right-0 flex items-end justify-center gap-8 px-8 h-[45vh]">
+      <div className="fixed bottom-0 left-0 right-0 flex items-end justify-center gap-12 px-10 h-[45vh]">
         {entries.map(([name]) => {
           const score = runningScores[name] || 0;
           const barHeight = maxScore > 0 ? Math.max(10, (score / maxScore) * 180) : 10;
