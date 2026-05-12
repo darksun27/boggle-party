@@ -140,7 +140,7 @@ select { padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border)
 let ws, board = [], gridSize = 4, minWordLen = 3, selected = [], dragging = false, myScore = 0, myWords = [];
 let myName = '', isHost = false;
 let DICT = null;
-fetch('https://raw.githubusercontent.com/first20hours/google-10000-english/master/google-10000-english-no-swears.txt')
+fetch('https://raw.githubusercontent.com/redbo/scrabble/master/dictionary.txt')
   .then(r => r.text())
   .then(t => { DICT = new Set(t.split('\n').map(w => w.trim().toLowerCase()).filter(w => w.length >= 3 && /^[a-z]+$/.test(w))); })
   .catch(() => {});

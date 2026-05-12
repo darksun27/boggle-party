@@ -8,24 +8,32 @@ const PORT = process.env.PORT || 3000;
 const DEFAULT_DURATION = 180;
 
 // --- Dictionary ---
-let DICT = null;
-let DICT_WORDS = []; // array for random selection during board generation
-const DICT_URL = 'https://raw.githubusercontent.com/first20hours/google-10000-english/master/google-10000-english-no-swears.txt';
+let DICT = null; // full dictionary for word validation
+let SEED_WORDS = []; // common words for board generation
+const DICT_URL = 'https://raw.githubusercontent.com/redbo/scrabble/master/dictionary.txt';
+const COMMON_URL = 'https://raw.githubusercontent.com/first20hours/google-10000-english/master/google-10000-english-no-swears.txt';
 
 async function loadDict() {
   try {
     const https = require('https');
-    const text = await new Promise((resolve, reject) => {
-      https.get(DICT_URL, res => {
+    const fetch = url => new Promise((resolve, reject) => {
+      https.get(url, res => {
         let data = '';
         res.on('data', c => data += c);
         res.on('end', () => resolve(data));
       }).on('error', reject);
     });
-    const words = text.split('\n').map(w => w.trim().toLowerCase()).filter(w => w.length >= 3 && /^[a-z]+$/.test(w));
-    DICT = new Set(words);
-    DICT_WORDS = words;
-    console.log(`Dictionary loaded: ${DICT.size} words`);
+
+    const [dictText, commonText] = await Promise.all([fetch(DICT_URL), fetch(COMMON_URL)]);
+
+    // Full scrabble dictionary for validation
+    DICT = new Set(dictText.split('\n').map(w => w.trim().toLowerCase()).filter(w => w.length >= 3 && /^[a-z]+$/.test(w)));
+
+    // Common words for board seeding (must also be in the full dict)
+    SEED_WORDS = commonText.split('\n').map(w => w.trim().toLowerCase())
+      .filter(w => w.length >= 3 && w.length <= 7 && /^[a-z]+$/.test(w) && DICT.has(w));
+
+    console.log(`Dictionary loaded: ${DICT.size} words (validation), ${SEED_WORDS.length} common words (board seeding)`);
   } catch (e) {
     console.error('Failed to load dictionary:', e.message);
   }
@@ -106,10 +114,10 @@ function countBoardWords(board, size) {
 }
 
 function pickWord(size) {
-  if (!DICT_WORDS.length) return null;
-  const maxLen = Math.min(size * 2, 8); // don't try words longer than reasonable path
+  if (!SEED_WORDS.length) return null;
+  const maxLen = Math.min(size * 2, 8);
   for (let i = 0; i < 20; i++) {
-    const w = DICT_WORDS[Math.floor(Math.random() * DICT_WORDS.length)];
+    const w = SEED_WORDS[Math.floor(Math.random() * SEED_WORDS.length)];
     if (w.length >= 3 && w.length <= maxLen && !w.includes('q')) return w;
   }
   return null;
