@@ -89,7 +89,7 @@ export default function HostResults() {
       setProgressUnique((uniqueIdx / uniqueTotal) * 100);
     }
 
-    // Flying points after a short delay
+    // Flying points after word is visible
     setTimeout(() => {
       const stageEl = stageRef.current;
       if (stageEl) {
@@ -116,7 +116,7 @@ export default function HostResults() {
         item.players.forEach(name => { next[name] = (next[name] || 0) + pts; });
         return next;
       });
-    }, 400);
+    }, 800);
 
     const timer = setTimeout(() => setRevealIdx(i => i + 1), 1800);
     return () => clearTimeout(timer);
