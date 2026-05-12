@@ -103,15 +103,11 @@ export default function HostResults() {
           if (!barEl) return;
           const barRect = barEl.getBoundingClientRect();
           const id = `${revealIdx}-${name}-${pIdx}`;
-          const midX = (stageRect.left + stageRect.width / 2 + barRect.left + barRect.width / 2) / 2;
-          const curveOffset = (pIdx % 2 === 0 ? -1 : 1) * 120;
           setFlyingPoints(prev => [...prev, {
             id,
             pts,
             startX: stageRect.left + stageRect.width / 2,
             startY: stageRect.top + stageRect.height / 2,
-            midX: midX + curveOffset,
-            midY: Math.min(stageRect.top, barRect.top) - 60,
             endX: barRect.left + barRect.width / 2,
             endY: barRect.top,
           }]);
@@ -222,16 +218,15 @@ export default function HostResults() {
           <motion.div
             key={fp.id}
             className="fixed font-display text-3xl font-bold pointer-events-none z-50"
-            style={{ color: '#fff', textShadow: '0 0 12px rgba(255,78,203,0.9), 0 0 24px rgba(107,33,168,0.7), 0 2px 4px rgba(0,0,0,0.5)' }}
-            initial={{ left: fp.startX - 15, top: fp.startY - 10, scale: 1.2, opacity: 1 }}
+            style={{ left: fp.startX - 15, top: fp.startY - 10, color: '#fff', textShadow: '0 0 12px rgba(255,78,203,0.9), 0 0 24px rgba(107,33,168,0.7), 0 2px 4px rgba(0,0,0,0.5)' }}
             animate={{
-              left: [fp.startX - 15, fp.midX - 15, fp.endX - 15],
-              top: [fp.startY - 10, fp.midY - 10, fp.endY - 10],
-              scale: [1.2, 1.4, 0.7],
-              opacity: [1, 1, 0.8],
+              x: [0, (fp.endX - fp.startX) * 0.5, fp.endX - fp.startX],
+              y: [0, -80, fp.endY - fp.startY],
+              scale: [1.2, 1.5, 0.6],
+              opacity: [1, 1, 0.7],
             }}
-            exit={{ opacity: 0, scale: 0.3 }}
-            transition={{ duration: 1, ease: [0.2, 0.8, 0.3, 1], times: [0, 0.4, 1] }}
+            exit={{ opacity: 0, scale: 0 }}
+            transition={{ duration: 1, ease: 'easeInOut' }}
           >
             +{fp.pts}
           </motion.div>
