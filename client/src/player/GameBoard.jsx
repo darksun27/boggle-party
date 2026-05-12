@@ -85,7 +85,7 @@ export default function GameBoard() {
   const warn = timeLeft <= 30;
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-3 pt-4">
+    <div className="flex flex-col items-center h-screen p-2 pt-6">
       {paused && (
         <div className="fixed inset-0 z-50 bg-white/70 backdrop-blur-lg flex items-center justify-center">
           <div className="glass p-6 text-center">
@@ -95,15 +95,13 @@ export default function GameBoard() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex justify-center items-center w-full max-w-sm mb-2">
-        <div className={`font-display text-xl font-bold px-3 py-1 rounded-xl glass ${urgent ? 'text-red-500' : warn ? 'text-orange-500' : 'text-accent'}`}>
-          {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-        </div>
+      {/* Timer */}
+      <div className={`font-display text-2xl font-bold px-4 py-2 rounded-xl glass mb-2 ${urgent ? 'text-red-500' : warn ? 'text-orange-500' : 'text-accent'}`}>
+        {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
       </div>
 
       {/* Timer bar */}
-      <div className="w-full max-w-sm h-1.5 rounded-full bg-white/20 mb-3 overflow-hidden">
+      <div className="w-full h-1.5 rounded-full bg-white/20 mb-3 overflow-hidden">
         <motion.div
           className="h-full rounded-full"
           style={{ background: urgent ? 'linear-gradient(90deg, #ef4444, #f97316)' : 'linear-gradient(90deg, #84fab0, #4de8ff)' }}
@@ -115,8 +113,8 @@ export default function GameBoard() {
       {/* Board */}
       <motion.div
         ref={boardRef}
-        className="board grid gap-2 mb-3 relative"
-        style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}
+        className="board grid gap-2 relative flex-1 max-h-[70vh] aspect-square self-center"
+        style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)`, width: `min(90vw, 70vh)` }}
         animate={shake ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
         transition={{ duration: 0.3 }}
         onMouseDown={(e) => { const c = e.target.closest('[data-idx]'); if (c) { e.preventDefault(); onStart(parseInt(c.dataset.idx)); } }}
@@ -158,7 +156,7 @@ export default function GameBoard() {
             <motion.div
               key={i}
               data-idx={i}
-              className={`cell glass w-[56px] h-[56px] flex items-center justify-center text-xl font-bold ${isSelected ? 'selected' : ''}`}
+              className={`cell glass w-full aspect-square flex items-center justify-center text-2xl font-bold ${isSelected ? 'selected' : ''}`}
               initial={{ scale: 0 }}
               animate={{
                 scale: isFlashing ? [1, 1.1, 1] : isSelected ? 1.12 : 1,
@@ -173,7 +171,7 @@ export default function GameBoard() {
       </motion.div>
 
       {/* Current word */}
-      <div className="font-display text-xl tracking-widest text-accent min-h-[1.5em] mb-2">
+      <div className="font-display text-2xl tracking-widest text-accent mt-2 min-h-[1.5em]">
         {currentWord || '\u00A0'}
       </div>
 
