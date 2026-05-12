@@ -113,8 +113,8 @@ export default function GameBoard() {
       {/* Board */}
       <motion.div
         ref={boardRef}
-        className="board grid gap-2 relative flex-1 max-h-[70vh] aspect-square self-center"
-        style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)`, width: `min(90vw, 70vh)` }}
+        className="board grid gap-2 relative self-center"
+        style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)`, width: `min(85vw, 360px)` }}
         animate={shake ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
         transition={{ duration: 0.3 }}
         onMouseDown={(e) => { const c = e.target.closest('[data-idx]'); if (c) { e.preventDefault(); onStart(parseInt(c.dataset.idx)); } }}
