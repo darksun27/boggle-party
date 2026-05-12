@@ -10,9 +10,10 @@
   "dependencies": {
     "boring-avatars": "^1.11.2",
     "framer-motion": "^11.15.0",
+    "howler": "^2.2.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "use-sound": "^4.0.3"
+    "react-sounds": "^1.0.30"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
