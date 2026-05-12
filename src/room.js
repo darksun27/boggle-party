@@ -98,7 +98,7 @@ function endGame(room, broadcast) {
   Object.entries(room.players).forEach(([name, p]) => {
     results[name] = { words: p.words, score: p.score };
   });
-  broadcast(room, { type: 'game-end', results, hostName: room.hostName });
+  broadcast(room, { type: 'game-end', results, hostName: room.hostName, board: room.board, gridSize: room.gridSize });
   log.info('Game ended', { code: room.code });
 }
 
@@ -136,11 +136,11 @@ function submitWord(room, playerName, wordPath) {
 
   const word = wordPath.map(i => room.board[i] === 'Q' ? 'QU' : room.board[i]).join('');
   if (word.length < room.minWordLen) return { valid: false, reason: `Min ${room.minWordLen} letters` };
-  if (player.words.includes(word)) return { valid: false, reason: 'Already found' };
+  if (player.words.some(w => w.word === word)) return { valid: false, reason: 'Already found' };
   if (!dictionary.isValid(word)) return { valid: false, reason: 'Not in dictionary' };
 
   const pts = SCORE_TABLE[Math.min(word.length, 8)];
-  player.words.push(word);
+  player.words.push({ word, path: wordPath });
   player.score += pts;
 
   return { valid: true, word, points: pts, totalScore: player.score };

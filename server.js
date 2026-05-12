@@ -33,9 +33,9 @@ const server = http.createServer((req, res) => {
       const script = `<script>
         window.__TEST_RESULTS__ = {
           results: {
-            "Alice": { words: ["STAR","RATE","TEAR","STREAM","REAL","DEAL","CREAM"], score: 28 },
-            "Bob": { words: ["STAR","RATE","HEAT","MEAN","LEAN","CLEAN"], score: 22 },
-            "Charlie": { words: ["STAR","DEAL","STEAM","DREAM","NEAR"], score: 20 }
+            "Alice": { words: [{word:"STAR",path:[0,1,5,4]},{word:"RATE",path:[2,5,1,3]},{word:"TEAR",path:[1,3,5,2]},{word:"STREAM",path:[0,1,2,3,5,6]},{word:"REAL",path:[2,3,5,8]},{word:"DEAL",path:[6,3,5,8]},{word:"CREAM",path:[7,2,3,5,6]}], score: 28 },
+            "Bob": { words: [{word:"STAR",path:[0,1,5,4]},{word:"RATE",path:[2,5,1,3]},{word:"HEAT",path:[12,3,5,1]},{word:"MEAN",path:[6,3,5,9]},{word:"LEAN",path:[8,3,5,9]},{word:"CLEAN",path:[7,8,3,5,9]}], score: 22 },
+            "Charlie": { words: [{word:"STAR",path:[0,1,5,4]},{word:"DEAL",path:[6,3,5,8]},{word:"STEAM",path:[0,1,3,5,6]},{word:"DREAM",path:[6,2,3,5,6]},{word:"NEAR",path:[9,3,5,2]}], score: 20 }
           },
           board: ["S","T","R","E","A","M","D","C","L","E","A","N","H","R","I","G"],
           gridSize: 4

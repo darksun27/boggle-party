@@ -5,40 +5,6 @@ import Avatar from '../shared/Avatar';
 
 const SCORE_TABLE = [0, 0, 0, 2, 3, 5, 8, 13, 21];
 
-function getAdj(idx, size) {
-  const r = Math.floor(idx / size), c = idx % size, adj = [];
-  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
-    if (!dr && !dc) continue;
-    const nr = r + dr, nc = c + dc;
-    if (nr >= 0 && nr < size && nc >= 0 && nc < size) adj.push(nr * size + nc);
-  }
-  return adj;
-}
-
-function findWordPath(word, board, size) {
-  if (!board || !word) return [];
-  const upper = word.toUpperCase();
-  function dfs(charIdx, cell, visited) {
-    const letter = board[cell] === 'Q' ? 'QU' : board[cell];
-    if (upper.slice(charIdx, charIdx + letter.length) !== letter) return null;
-    const nextIdx = charIdx + letter.length;
-    const path = [...visited, cell];
-    if (nextIdx >= upper.length) return path;
-    for (const adj of getAdj(cell, size)) {
-      if (!visited.includes(adj)) {
-        const result = dfs(nextIdx, adj, path);
-        if (result) return result;
-      }
-    }
-    return null;
-  }
-  for (let i = 0; i < board.length; i++) {
-    const result = dfs(0, i, []);
-    if (result) return result;
-  }
-  return [];
-}
-
 const WORD_COLORS = {
   3: { color: '#84fab0', shadow: '0 0 20px rgba(132,250,176,0.6)' },
   4: { color: '#4de8ff', shadow: '0 0 20px rgba(77,232,255,0.6)' },
@@ -76,16 +42,21 @@ export default function HostResults() {
   useEffect(() => {
     const words = {};
     entries.forEach(([name, data]) => {
-      data.words.forEach(w => { if (!words[w]) words[w] = []; words[w].push(name); });
+      data.words.forEach(w => {
+        const word = typeof w === 'string' ? w : w.word;
+        const path = typeof w === 'string' ? [] : w.path;
+        if (!words[word]) words[word] = { players: [], path };
+        words[word].players.push(name);
+      });
     });
     allWords.current = words;
 
-    const common = Object.entries(words).filter(([, p]) => p.length > 1).sort((a, b) => a[0].length - b[0].length);
-    const unique = Object.entries(words).filter(([, p]) => p.length === 1).sort((a, b) => a[0].length - b[0].length);
+    const common = Object.entries(words).filter(([, v]) => v.players.length > 1).sort((a, b) => a[0].length - b[0].length);
+    const unique = Object.entries(words).filter(([, v]) => v.players.length === 1).sort((a, b) => a[0].length - b[0].length);
 
     const seq = [];
-    common.forEach(([w, p]) => seq.push({ word: w, players: p, type: 'common' }));
-    unique.forEach(([w, p]) => seq.push({ word: w, players: p, type: 'unique' }));
+    common.forEach(([w, v]) => seq.push({ word: w, players: v.players, path: v.path, type: 'common' }));
+    unique.forEach(([w, v]) => seq.push({ word: w, players: v.players, path: v.path, type: 'unique' }));
 
     sequence.current = seq;
     commonCount.current = common.length;
@@ -213,12 +184,11 @@ export default function HostResults() {
       </div>
 
       {/* Board with highlighted path */}
-      {state.board && currentWord && (
+      {state.board && currentWord && currentWord.path && currentWord.path.length > 0 && (
         <div className="grid gap-1.5 mb-4" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
           {state.board.map((letter, i) => {
-            const path = currentWord ? findWordPath(currentWord.word, state.board, state.gridSize) : [];
-            const isHighlighted = path.includes(i);
-            const pathIdx = path.indexOf(i);
+            const pathIdx = currentWord.path.indexOf(i);
+            const isHighlighted = pathIdx !== -1;
             return (
               <motion.div
                 key={i}
@@ -228,7 +198,7 @@ export default function HostResults() {
                   borderColor: isHighlighted ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)',
                   scale: isHighlighted ? 1.1 : 1,
                 }}
-                transition={{ delay: isHighlighted ? pathIdx * 0.05 : 0, duration: 0.2 }}
+                transition={{ delay: isHighlighted ? pathIdx * 0.06 : 0, duration: 0.2 }}
                 style={{ color: isHighlighted ? '#fff' : 'rgba(45,27,78,0.6)' }}
               >
                 {letter === 'Q' ? 'Qu' : letter}
