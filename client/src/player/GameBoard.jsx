@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useGame } from '../shared/GameContext';
 import { useSounds } from '../shared/useSounds';
 
@@ -178,21 +178,6 @@ export default function GameBoard() {
       <div className="font-display text-2xl tracking-widest text-accent mt-2 min-h-[1.5em]">
         {currentWord || '\u00A0'}
       </div>
-
-      {/* Result toast */}
-      <AnimatePresence>
-        {lastResult && (
-          <motion.div
-            className={`fixed bottom-24 left-1/2 -translate-x-1/2 px-5 py-2 rounded-xl font-semibold text-base backdrop-blur-md z-50
-              ${lastResult.valid ? 'bg-green-500/20 border border-green-500/50 text-green-700' : 'bg-red-500/20 border border-red-500/50 text-red-700'}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-          >
-            {lastResult.valid ? `+${lastResult.points} ${lastResult.word}` : lastResult.reason}
-          </motion.div>
-        )}
-      </AnimatePresence>
 
     </div>
   );
