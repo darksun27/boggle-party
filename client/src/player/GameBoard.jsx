@@ -18,6 +18,8 @@ export default function GameBoard() {
   const sfx = useSounds();
   const [selected, setSelected] = useState([]);
   const [dragging, setDragging] = useState(false);
+  const [flash, setFlash] = useState(null); // { cells: number[], color: 'green'|'yellow'|'red' }
+  const [shake, setShake] = useState(false);
   const boardRef = useRef(null);
   const lastPathRef = useRef([]);
 
@@ -64,18 +66,10 @@ export default function GameBoard() {
 
   useEffect(() => {
     if (lastResult) {
-      // Flash cells with color feedback
-      const cells = boardRef.current?.querySelectorAll('[data-idx]');
-      if (cells && lastPathRef.current.length > 0) {
-        const cls = lastResult.valid ? 'flash-green' : lastResult.reason === 'Already found' ? 'flash-yellow' : 'flash-red';
-        lastPathRef.current.forEach(idx => cells[idx]?.classList.add(cls));
-        setTimeout(() => lastPathRef.current.forEach(idx => cells[idx]?.classList.remove(cls)), 600);
-        if (!lastResult.valid && lastResult.reason !== 'Already found') {
-          boardRef.current?.classList.add('board-shake');
-          setTimeout(() => boardRef.current?.classList.remove('board-shake'), 300);
-        }
-      }
-      const t = setTimeout(() => dispatch({ type: 'CLEAR_RESULT' }), 1500);
+      if (lastResult.valid) setFlash({ cells: lastPathRef.current, color: 'green' });
+      else if (lastResult.reason === 'Already found') setFlash({ cells: lastPathRef.current, color: 'yellow' });
+      else { setFlash({ cells: lastPathRef.current, color: 'red' }); setShake(true); }
+      const t = setTimeout(() => { setFlash(null); setShake(false); dispatch({ type: 'CLEAR_RESULT' }); }, 800);
       return () => clearTimeout(t);
     }
   }, [lastResult]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -119,10 +113,12 @@ export default function GameBoard() {
       </div>
 
       {/* Board */}
-      <div
+      <motion.div
         ref={boardRef}
         className="board grid gap-2 mb-3 relative"
         style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}
+        animate={shake ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
+        transition={{ duration: 0.3 }}
         onMouseDown={(e) => { const c = e.target.closest('[data-idx]'); if (c) { e.preventDefault(); onStart(parseInt(c.dataset.idx)); } }}
         onMouseMove={(e) => dragging && onMove(e.clientX, e.clientY)}
         onMouseUp={onEnd}
@@ -149,19 +145,32 @@ export default function GameBoard() {
             />
           </svg>
         )}
-        {board && board.map((letter, i) => (
-          <motion.div
-            key={i}
-            data-idx={i}
-            className={`cell glass w-[56px] h-[56px] flex items-center justify-center text-xl font-bold ${selected.includes(i) ? 'selected' : ''}`}
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: i * 0.02, type: 'spring', stiffness: 500 }}
-          >
-            {letter === 'Q' ? 'Qu' : letter}
-          </motion.div>
-        ))}
-      </div>
+        {board && board.map((letter, i) => {
+          const isSelected = selected.includes(i);
+          const isFlashing = flash && flash.cells.includes(i);
+          const flashBg = isFlashing
+            ? flash.color === 'green' ? 'rgba(34,197,94,0.6)'
+            : flash.color === 'yellow' ? 'rgba(250,204,21,0.6)'
+            : 'rgba(239,68,68,0.5)'
+            : undefined;
+
+          return (
+            <motion.div
+              key={i}
+              data-idx={i}
+              className={`cell glass w-[56px] h-[56px] flex items-center justify-center text-xl font-bold ${isSelected ? 'selected' : ''}`}
+              initial={{ scale: 0 }}
+              animate={{
+                scale: isFlashing ? [1, 1.1, 1] : isSelected ? 1.12 : 1,
+                backgroundColor: flashBg || 'rgba(255,255,255,0.4)',
+              }}
+              transition={isFlashing ? { duration: 0.4 } : { delay: i * 0.02, type: 'spring', stiffness: 500 }}
+            >
+              {letter === 'Q' ? 'Qu' : letter}
+            </motion.div>
+          );
+        })}
+      </motion.div>
 
       {/* Current word */}
       <div className="font-display text-xl tracking-widest text-accent min-h-[1.5em] mb-2">
