@@ -131,7 +131,10 @@ export default function HostResults() {
   const numUnique = totalWords - numCommon;
 
   return (
-    <div className="flex flex-col items-center h-screen p-4 overflow-hidden">
+    <div className="flex flex-col items-center h-screen overflow-hidden">
+      {/* Spacer to push content toward center */}
+      <div className="flex-1" />
+
       {/* 1. Title */}
       <h2 className="font-display text-2xl font-bold bg-gradient-to-r from-pink via-yellow-300 to-cyan-300 bg-clip-text text-transparent mb-2">
         🏁 RACE RESULTS!
@@ -154,7 +157,6 @@ export default function HostResults() {
       </div>
 
       {/* 3. Board */}
-      <div className="flex-1" />
       {state.board && (
         <div className="grid gap-1.5 mb-4" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
           {state.board.map((letter, i) => {
@@ -213,7 +215,7 @@ export default function HostResults() {
       </AnimatePresence>
 
       {/* 5. Player scores */}
-      <div className="flex items-end justify-center gap-10 flex-1 w-full max-w-3xl pb-4">
+      <div className="flex items-end justify-center gap-10 flex-1 w-full max-w-3xl">
         {entries.map(([name]) => {
           const score = runningScores[name] || 0;
           const barHeight = maxScore > 0 ? Math.max(10, (score / maxScore) * 150) : 10;
