@@ -1,28 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { useGame } from '../shared/GameContext';
 
 export default function EndScreen() {
   const { state, send } = useGame();
-  const { score, words, isHost, results } = state;
-  const [resultsComplete, setResultsComplete] = useState(false);
-
-  // Estimate how long the host results reveal takes
-  useEffect(() => {
-    if (!results) return;
-    const allWords = {};
-    Object.values(results).forEach(data => {
-      (data.words || []).forEach(w => {
-        const word = typeof w === 'string' ? w : w.word;
-        allWords[word] = true;
-      });
-    });
-    const totalWords = Object.keys(allWords).length;
-    // 1.3s per word + 1s initial delay + 2s buffer for winner animation
-    const revealDuration = (totalWords * 1.3 + 3) * 1000;
-    const timer = setTimeout(() => setResultsComplete(true), revealDuration);
-    return () => clearTimeout(timer);
-  }, [results]);
+  const { score, words, isHost, resultsComplete } = state;
 
   const restart = () => send({ type: 'restart', gridSize: state.gridSize, minWordLen: state.minWordLen, duration: state.duration });
 

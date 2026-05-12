@@ -202,6 +202,12 @@ wss.on('connection', (ws) => {
         break;
       }
 
+      case 'results-complete': {
+        if (!currentRoom || role !== 'display') return;
+        broadcastAll(currentRoom, { type: 'results-complete' });
+        break;
+      }
+
       case 'submit-word': {
         if (role !== 'player' || !currentRoom || currentRoom.state !== 'playing') return;
         const result = room.submitWord(currentRoom, playerName, msg.path);

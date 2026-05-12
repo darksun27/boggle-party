@@ -24,6 +24,7 @@ const initialState = {
   results: null,
   paused: false,
   pausedPlayer: null,
+  resultsComplete: false,
 };
 
 function reducer(state, action) {
@@ -39,7 +40,7 @@ function reducer(state, action) {
     case 'SETTINGS_CHANGED':
       return { ...state, gridSize: action.gridSize, minWordLen: action.minWordLen, duration: action.duration };
     case 'GAME_START':
-      return { ...state, screen: 'playing', board: action.board, gridSize: action.gridSize, minWordLen: action.minWordLen, duration: action.duration, timeLeft: action.timeLeft, score: 0, words: [], lastResult: null, results: null };
+      return { ...state, screen: 'playing', board: action.board, gridSize: action.gridSize, minWordLen: action.minWordLen, duration: action.duration, timeLeft: action.timeLeft, score: 0, words: [], lastResult: null, results: null, resultsComplete: false };
     case 'TICK':
       return { ...state, timeLeft: action.timeLeft };
     case 'WORD_RESULT':
@@ -57,6 +58,8 @@ function reducer(state, action) {
       return { ...state, paused: true, pausedPlayer: action.disconnectedPlayer, players: action.players };
     case 'GAME_RESUMED':
       return { ...state, paused: false, pausedPlayer: null, timeLeft: action.timeLeft };
+    case 'RESULTS_COMPLETE':
+      return { ...state, resultsComplete: true };
     case 'HOST_CHANGED':
       return { ...state, hostName: action.hostName, isHost: action.hostName === state.playerName, players: action.players };
     case 'ERROR':
@@ -89,6 +92,7 @@ export function GameProvider({ children, role }) {
       case 'new-round': dispatch({ ...msg, type: 'NEW_ROUND' }); break;
       case 'game-paused': dispatch({ ...msg, type: 'GAME_PAUSED' }); break;
       case 'game-resumed': dispatch({ ...msg, type: 'GAME_RESUMED' }); break;
+      case 'results-complete': dispatch({ type: 'RESULTS_COMPLETE' }); break;
       case 'error': dispatch({ type: 'ERROR', message: msg.message }); break;
     }
   }, []);

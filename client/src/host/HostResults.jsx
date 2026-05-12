@@ -76,6 +76,7 @@ export default function HostResults() {
       setCurrentWord(null);
       setShowWinner(true);
       sfx.gameOver();
+      send({ type: 'results-complete' });
       return;
     }
 
