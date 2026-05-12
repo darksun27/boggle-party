@@ -6,14 +6,13 @@ import HostResults from './HostResults';
 import './host.css';
 
 export default function HostApp() {
-  const { state, send } = useGame();
+  const { state, send, connected } = useGame();
 
-  // Auto-create room on mount
   useEffect(() => {
-    if (state.screen === 'loading') {
+    if (connected && state.screen === 'loading') {
       send({ type: 'create-room' });
     }
-  }, [state.screen, send]);
+  }, [connected, state.screen, send]);
 
   switch (state.screen) {
     case 'loading': return <div className="screen center"><h1 className="logo">🎲 BOGGLE PARTY</h1><p>Connecting...</p></div>;
