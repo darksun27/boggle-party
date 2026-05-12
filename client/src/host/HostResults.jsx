@@ -31,13 +31,11 @@ export default function HostResults() {
     allWords.current = words;
 
     const common = Object.entries(words).filter(([, p]) => p.length > 1).sort((a, b) => a[0].length - b[0].length);
-    const uniqueByPlayer = {};
-    entries.forEach(([name]) => { uniqueByPlayer[name] = []; });
-    Object.entries(words).forEach(([w, p]) => { if (p.length === 1) uniqueByPlayer[p[0]].push(w); });
+    const unique = Object.entries(words).filter(([, p]) => p.length === 1).sort((a, b) => a[0].length - b[0].length);
 
     const seq = [];
     common.forEach(([w, p]) => seq.push({ word: w, players: p, type: 'common' }));
-    entries.forEach(([name]) => { (uniqueByPlayer[name] || []).forEach(w => seq.push({ word: w, players: [name], type: 'unique' })); });
+    unique.forEach(([w, p]) => seq.push({ word: w, players: p, type: 'unique' }));
 
     sequence.current = seq;
     commonCount.current = common.length;
