@@ -102,7 +102,7 @@ export default function HostResults() {
             endX: barRect.left + barRect.width / 2,
             endY: barRect.top,
           }]);
-          setTimeout(() => setFlyingPoints(prev => prev.filter(p => p.id !== id)), 900);
+          setTimeout(() => setFlyingPoints(prev => prev.filter(p => p.id !== id)), 1500);
         });
       }
 
@@ -179,12 +179,12 @@ export default function HostResults() {
         {flyingPoints.map(fp => (
           <motion.div
             key={fp.id}
-            className="fixed font-display text-2xl font-bold text-yellow-300 pointer-events-none z-50"
-            style={{ textShadow: '0 0 10px rgba(255,222,89,0.8)' }}
-            initial={{ left: fp.startX - 15, top: fp.startY - 10, scale: 1, opacity: 1 }}
-            animate={{ left: fp.endX - 15, top: fp.endY - 10, scale: 0.6, opacity: 0.7 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+            className="fixed font-display text-3xl font-bold pointer-events-none z-50"
+            style={{ color: '#fff', textShadow: '0 0 12px rgba(255,78,203,0.9), 0 0 24px rgba(107,33,168,0.7), 0 2px 4px rgba(0,0,0,0.5)' }}
+            initial={{ left: fp.startX - 15, top: fp.startY - 10, scale: 1.2, opacity: 1 }}
+            animate={{ left: fp.endX - 15, top: fp.endY - 10, scale: 0.8, opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ duration: 1.4, ease: [0.25, 0.1, 0.25, 1] }}
           >
             +{fp.pts}
           </motion.div>
