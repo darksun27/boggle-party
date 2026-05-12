@@ -96,6 +96,7 @@ export function GameProvider({ children, role }) {
   const roomCreated = useRef(false);
 
   const onConnect = useCallback((ws) => {
+    if (window.__TEST_RESULTS__) return; // skip in test mode
     if (role === 'host' && !roomCreated.current) {
       roomCreated.current = true;
       ws.send(JSON.stringify({ type: 'create-room' }));
