@@ -1,302 +1,75 @@
+'use strict';
+
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { WebSocketServer } = require('ws');
 const os = require('os');
+const { WebSocketServer } = require('ws');
 
-const PORT = process.env.PORT || 3000;
-const DEFAULT_DURATION = 180;
+const config = require('./src/config');
+const log = require('./src/logger');
+const dictionary = require('./src/dictionary');
+const room = require('./src/room');
 
-// --- Dictionary ---
-let DICT = null; // full dictionary for word validation
-let SEED_WORDS = []; // common words for board generation
-const DICT_URL = 'https://raw.githubusercontent.com/redbo/scrabble/master/dictionary.txt';
-const COMMON_URL = 'https://raw.githubusercontent.com/first20hours/google-10000-english/master/google-10000-english-no-swears.txt';
+// --- HTTP Server ---
 
-async function loadDict() {
-  try {
-    const https = require('https');
-    const fetch = url => new Promise((resolve, reject) => {
-      https.get(url, res => {
-        let data = '';
-        res.on('data', c => data += c);
-        res.on('end', () => resolve(data));
-      }).on('error', reject);
-    });
-
-    const [dictText, commonText] = await Promise.all([fetch(DICT_URL), fetch(COMMON_URL)]);
-
-    // Full scrabble dictionary for validation
-    DICT = new Set(dictText.split('\n').map(w => w.trim().toLowerCase()).filter(w => w.length >= 3 && /^[a-z]+$/.test(w)));
-
-    // Common words for board seeding (must also be in the full dict)
-    SEED_WORDS = commonText.split('\n').map(w => w.trim().toLowerCase())
-      .filter(w => w.length >= 3 && w.length <= 7 && /^[a-z]+$/.test(w) && DICT.has(w));
-
-    console.log(`Dictionary loaded: ${DICT.size} words (validation), ${SEED_WORDS.length} common words (board seeding)`);
-  } catch (e) {
-    console.error('Failed to load dictionary:', e.message);
-  }
-}
-
-// --- Board generation ---
-const FILL_LETTERS = 'AAABCDEEEFGHIIIJKLMNOOOPQRSTUUVWXYZ';
-
-function generateBoard(size) {
-  const MIN_WORDS = 20;
-
-  for (let regen = 0; regen < 20; regen++) {
-    const board = new Array(size * size).fill(null);
-
-    // Place as many words as possible
-    const wordsPlaced = [];
-    for (let attempt = 0; attempt < 300 && wordsPlaced.length < 12; attempt++) {
-      const word = pickWord(size);
-      if (!word) continue;
-      const path = tryPlaceWord(word, board, size);
-      if (path) {
-        for (let i = 0; i < path.length; i++) board[path[i]] = word[i].toUpperCase();
-        wordsPlaced.push(word);
-      }
-    }
-
-    // Fill remaining empty cells
-    for (let i = 0; i < board.length; i++) {
-      if (!board[i]) board[i] = FILL_LETTERS[Math.floor(Math.random() * FILL_LETTERS.length)];
-    }
-
-    // Count total findable words on this board
-    const findable = countBoardWords(board, size);
-    if (findable >= MIN_WORDS) {
-      console.log(`Board generated: ${findable} findable words (placed ${wordsPlaced.length} seeds)`);
-      return board;
-    }
-  }
-
-  // Fallback: return last attempt even if under threshold
-  const board = new Array(size * size).fill(null);
-  for (let attempt = 0; attempt < 300; attempt++) {
-    const word = pickWord(size);
-    if (!word) continue;
-    const path = tryPlaceWord(word, board, size);
-    if (path) { for (let i = 0; i < path.length; i++) board[path[i]] = word[i].toUpperCase(); }
-  }
-  for (let i = 0; i < board.length; i++) {
-    if (!board[i]) board[i] = FILL_LETTERS[Math.floor(Math.random() * FILL_LETTERS.length)];
-  }
-  console.log(`Board generated (fallback): ${countBoardWords(board, size)} findable words`);
-  return board;
-}
-
-function countBoardWords(board, size) {
-  if (!DICT) return 0;
-  const found = new Set();
-  const visited = new Array(size * size).fill(false);
-
-  function dfs(idx, word) {
-    if (word.length >= 3 && word.length <= 8 && DICT.has(word)) found.add(word);
-    if (word.length >= 8) return;
-    for (const adj of getAdj(idx, size)) {
-      if (!visited[adj]) {
-        visited[adj] = true;
-        dfs(adj, word + board[adj].toLowerCase());
-        visited[adj] = false;
-      }
-    }
-  }
-
-  for (let i = 0; i < board.length; i++) {
-    visited[i] = true;
-    dfs(i, board[i].toLowerCase());
-    visited[i] = false;
-  }
-  return found.size;
-}
-
-function pickWord(size) {
-  if (!SEED_WORDS.length) return null;
-  const maxLen = Math.min(size * 2, 8);
-  for (let i = 0; i < 20; i++) {
-    const w = SEED_WORDS[Math.floor(Math.random() * SEED_WORDS.length)];
-    if (w.length >= 3 && w.length <= maxLen && !w.includes('q')) return w;
-  }
-  return null;
-}
-
-function tryPlaceWord(word, board, size) {
-  // Try multiple random starting positions
-  const cells = [...Array(size * size).keys()];
-  shuffle(cells);
-
-  for (const startCell of cells.slice(0, 15)) {
-    const path = findPath(word, 0, startCell, [], board, size);
-    if (path) return path;
-  }
-  return null;
-}
-
-function findPath(word, charIdx, cell, visited, board, size) {
-  if (charIdx >= word.length) return visited;
-  if (cell < 0 || cell >= size * size) return null;
-  if (visited.includes(cell)) return null;
-
-  const existing = board[cell];
-  if (existing && existing.toLowerCase() !== word[charIdx]) return null;
-
-  const newVisited = [...visited, cell];
-  if (charIdx === word.length - 1) return newVisited;
-
-  const neighbors = getAdj(cell, size);
-  shuffle(neighbors);
-  for (const next of neighbors) {
-    const result = findPath(word, charIdx + 1, next, newVisited, board, size);
-    if (result) return result;
-  }
-  return null;
-}
-
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-function getAdj(idx, size) {
-  const r = Math.floor(idx / size), c = idx % size, adj = [];
-  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
-    if (!dr && !dc) continue;
-    const nr = r + dr, nc = c + dc;
-    if (nr >= 0 && nr < size && nc >= 0 && nc < size) adj.push(nr * size + nc);
-  }
-  return adj;
-}
-
-function isValidPath(wordPath, size) {
-  for (let i = 1; i < wordPath.length; i++) {
-    if (!getAdj(wordPath[i - 1], size).includes(wordPath[i])) return false;
-    if (wordPath.slice(0, i).includes(wordPath[i])) return false;
-  }
-  return true;
-}
-
-// --- Rooms ---
-const rooms = {};
-
-function genCode() {
-  let code;
-  do { code = Math.random().toString(36).substring(2, 6).toUpperCase(); } while (rooms[code]);
-  return code;
-}
-
-function createRoom() {
-  const code = genCode();
-  rooms[code] = {
-    code,
-    display: null,
-    players: {},
-    hostName: null,
-    board: generateBoard(4),
-    gridSize: 4,
-    minWordLen: 3,
-    duration: DEFAULT_DURATION,
-    timer: null,
-    timeLeft: DEFAULT_DURATION,
-    state: 'lobby',
-    typing: new Set(),
+const server = http.createServer((req, res) => {
+  const url = req.url.split('?')[0];
+  const routes = {
+    '/': 'host.html',
+    '/host': 'host.html',
+    '/play': 'player.html',
+    '/health': null,
   };
-  return rooms[code];
-}
 
-function broadcastAll(room, msg) {
-  const data = JSON.stringify(msg);
-  if (room.display && room.display.readyState === 1) room.display.send(data);
-  Object.values(room.players).forEach(p => {
-    if (p.ws && p.ws.readyState === 1) p.ws.send(data);
+  if (url === '/health') {
+    const status = { ok: true, dictLoaded: dictionary.isLoaded(), rooms: room.getRoomCount() };
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(status));
+    return;
+  }
+
+  const file = routes[url];
+  if (!file) { res.writeHead(404); res.end('Not found'); return; }
+
+  const filePath = path.join(__dirname, file);
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      log.error('File read error', { file, error: err.message });
+      res.writeHead(500);
+      res.end('Internal server error');
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache' });
+    res.end(data);
   });
-}
+});
 
-function sendToDisplay(room, msg) {
-  if (room.display && room.display.readyState === 1) room.display.send(JSON.stringify(msg));
-}
+// --- WebSocket Helpers ---
 
 function sendTo(ws, msg) {
   if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg));
 }
 
-function getPlayerList(room) {
-  return Object.entries(room.players)
-    .filter(([, p]) => p.ws && p.ws.readyState === 1)
-    .map(([name, p]) => ({
-      name, score: p.score, wordCount: p.words.length, isHost: name === room.hostName
-    }));
-}
-
-function assignHost(room) {
-  const connected = Object.entries(room.players).filter(([, p]) => p.ws && p.ws.readyState === 1);
-  if (connected.length === 0) { room.hostName = null; return; }
-  if (room.hostName && room.players[room.hostName] && room.players[room.hostName].ws && room.players[room.hostName].ws.readyState === 1) return;
-  room.hostName = connected[0][0];
-  broadcastAll(room, { type: 'host-changed', hostName: room.hostName, players: getPlayerList(room) });
-}
-
-function startGame(room) {
-  room.state = 'playing';
-  room.timeLeft = room.duration;
-  Object.values(room.players).forEach(p => { p.words = []; p.score = 0; });
-  broadcastAll(room, { type: 'game-start', board: room.board, gridSize: room.gridSize, minWordLen: room.minWordLen, duration: room.duration, timeLeft: room.timeLeft });
-  room.timer = setInterval(() => {
-    room.timeLeft--;
-    if (room.timeLeft <= 0) {
-      clearInterval(room.timer);
-      room.state = 'ended';
-      endGame(room);
-    } else {
-      broadcastAll(room, { type: 'tick', timeLeft: room.timeLeft });
-    }
-  }, 1000);
-}
-
-function endGame(room) {
-  const results = {};
-  Object.entries(room.players).forEach(([name, p]) => {
-    results[name] = { words: p.words, score: p.score };
+function broadcastAll(r, msg) {
+  const data = JSON.stringify(msg);
+  if (r.display && r.display.readyState === 1) r.display.send(data);
+  Object.values(r.players).forEach(p => {
+    if (p.ws && p.ws.readyState === 1) p.ws.send(data);
   });
-  broadcastAll(room, { type: 'game-end', results, hostName: room.hostName });
 }
 
-function resetRoom(room, config) {
-  if (room.timer) clearInterval(room.timer);
-  room.gridSize = config.gridSize || room.gridSize;
-  room.minWordLen = config.minWordLen || room.minWordLen;
-  room.duration = config.duration || room.duration;
-  room.board = generateBoard(room.gridSize);
-  room.timeLeft = room.duration;
-  room.state = 'lobby';
-  Object.values(room.players).forEach(p => { p.words = []; p.score = 0; });
+function sendToDisplay(r, msg) {
+  if (r.display && r.display.readyState === 1) r.display.send(JSON.stringify(msg));
 }
 
-// --- HTTP server ---
-const server = http.createServer((req, res) => {
-  let filePath;
-  const url = req.url.split('?')[0];
-  if (url === '/' || url === '/host') filePath = path.join(__dirname, 'host.html');
-  else if (url === '/play') filePath = path.join(__dirname, 'player.html');
-  else { res.writeHead(404); res.end('Not found'); return; }
-  fs.readFile(filePath, (err, data) => {
-    if (err) { res.writeHead(500); res.end('Error'); return; }
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(data);
-  });
-});
+// --- WebSocket Server ---
 
-// --- WebSocket server ---
 const wss = new WebSocketServer({ server });
 
 wss.on('connection', (ws) => {
   let role = null;
-  let room = null;
+  let currentRoom = null;
   let playerName = null;
 
   ws.on('message', (raw) => {
@@ -305,150 +78,208 @@ wss.on('connection', (ws) => {
 
     switch (msg.type) {
       case 'create-room': {
-        room = createRoom();
-        room.display = ws;
+        currentRoom = room.create();
+        currentRoom.display = ws;
         role = 'display';
-        sendTo(ws, { type: 'room-created', code: room.code, gridSize: room.gridSize, minWordLen: room.minWordLen, duration: room.duration });
+        sendTo(ws, {
+          type: 'room-created', code: currentRoom.code,
+          gridSize: currentRoom.gridSize, minWordLen: currentRoom.minWordLen, duration: currentRoom.duration,
+        });
         break;
       }
+
       case 'joining': {
-        const r = rooms[msg.code && msg.code.toUpperCase()];
+        const r = room.get(msg.code);
         if (!r) return;
-        room = r;
+        currentRoom = r;
         r.typing.add(ws);
         sendToDisplay(r, { type: 'typing-update', count: r.typing.size });
         break;
       }
+
       case 'join': {
-        const r = rooms[msg.code && msg.code.toUpperCase()];
+        const r = room.get(msg.code);
         if (!r) { sendTo(ws, { type: 'error', message: 'Room not found' }); return; }
         if (r.state === 'ended') { sendTo(ws, { type: 'error', message: 'Game already ended' }); return; }
-        room = r;
+
+        currentRoom = r;
         role = 'player';
-        playerName = msg.name || `Player${Object.keys(room.players).length + 1}`;
-        // Reconnection: if player exists but disconnected, restore them
-        if (room.players[playerName] && (!room.players[playerName].ws || room.players[playerName].ws.readyState !== 1)) {
-          room.players[playerName].ws = ws;
-        } else if (room.players[playerName] && room.players[playerName].ws && room.players[playerName].ws.readyState === 1) {
+        playerName = msg.name || `Player${Object.keys(r.players).length + 1}`;
+
+        // Reconnection or new player
+        if (r.players[playerName] && (!r.players[playerName].ws || r.players[playerName].ws.readyState !== 1)) {
+          r.players[playerName].ws = ws;
+        } else if (r.players[playerName]) {
           playerName += Math.floor(Math.random() * 99);
-          room.players[playerName] = { ws, words: [], score: 0 };
+          r.players[playerName] = { ws, words: [], score: 0 };
         } else {
-          room.players[playerName] = { ws, words: [], score: 0 };
+          r.players[playerName] = { ws, words: [], score: 0 };
         }
-        if (!room.hostName) room.hostName = playerName;
-        const isHostPlayer = playerName === room.hostName;
-        const currentState = room.state === 'paused' ? 'playing' : room.state;
-        sendTo(ws, { type: 'joined', name: playerName, isHost: isHostPlayer, state: currentState, board: (room.state === 'playing' || room.state === 'paused') ? room.board : null, gridSize: room.gridSize, minWordLen: room.minWordLen, duration: room.duration, timeLeft: room.timeLeft });
-        // Remove from typing and notify
-        room.typing.delete(ws);
-        broadcastAll(room, { type: 'player-joined', players: getPlayerList(room), hostName: room.hostName });
-        sendToDisplay(room, { type: 'typing-update', count: room.typing.size });
-        // Auto-resume if game was paused
-        if (room.state === 'paused') {
-          room.state = 'playing';
-          room.timer = setInterval(() => {
-            room.timeLeft--;
-            if (room.timeLeft <= 0) { clearInterval(room.timer); room.state = 'ended'; endGame(room); }
-            else { broadcastAll(room, { type: 'tick', timeLeft: room.timeLeft }); }
-          }, 1000);
-          broadcastAll(room, { type: 'game-resumed', timeLeft: room.timeLeft });
+
+        if (!r.hostName) r.hostName = playerName;
+
+        sendTo(ws, {
+          type: 'joined', name: playerName, isHost: playerName === r.hostName,
+          state: r.state === 'paused' ? 'playing' : r.state,
+          board: (r.state === 'playing' || r.state === 'paused') ? r.board : null,
+          gridSize: r.gridSize, minWordLen: r.minWordLen, duration: r.duration, timeLeft: r.timeLeft,
+        });
+
+        r.typing.delete(ws);
+        broadcastAll(r, { type: 'player-joined', players: room.getPlayerList(r), hostName: r.hostName });
+        sendToDisplay(r, { type: 'typing-update', count: r.typing.size });
+
+        // Auto-resume paused game
+        if (r.state === 'paused') {
+          room.resumeTimer(r, broadcastAll);
+          broadcastAll(r, { type: 'game-resumed', timeLeft: r.timeLeft });
         }
         break;
       }
+
       case 'start-game': {
-        if (!room || playerName !== room.hostName) return;
-        if (room.state === 'playing') return;
-        if (msg.gridSize) room.gridSize = msg.gridSize;
-        if (msg.minWordLen) room.minWordLen = msg.minWordLen;
-        if (msg.duration) room.duration = msg.duration;
-        room.board = generateBoard(room.gridSize);
-        startGame(room);
+        if (!currentRoom || playerName !== currentRoom.hostName) return;
+        if (currentRoom.state === 'playing') return;
+        if (msg.gridSize) currentRoom.gridSize = msg.gridSize;
+        if (msg.minWordLen) currentRoom.minWordLen = msg.minWordLen;
+        if (msg.duration) currentRoom.duration = msg.duration;
+        const board = require('./src/board');
+        currentRoom.board = board.generate(currentRoom.gridSize);
+        room.startGame(currentRoom, broadcastAll);
         break;
       }
+
       case 'update-settings': {
-        if (!room || playerName !== room.hostName) return;
-        if (room.state === 'playing') return;
-        if (msg.gridSize) room.gridSize = msg.gridSize;
-        if (msg.minWordLen) room.minWordLen = msg.minWordLen;
-        if (msg.duration) room.duration = msg.duration;
-        sendToDisplay(room, { type: 'settings-changed', gridSize: room.gridSize, minWordLen: room.minWordLen, duration: room.duration });
+        if (!currentRoom || playerName !== currentRoom.hostName) return;
+        if (currentRoom.state === 'playing') return;
+        if (msg.gridSize) currentRoom.gridSize = msg.gridSize;
+        if (msg.minWordLen) currentRoom.minWordLen = msg.minWordLen;
+        if (msg.duration) currentRoom.duration = msg.duration;
+        sendToDisplay(currentRoom, {
+          type: 'settings-changed', gridSize: currentRoom.gridSize,
+          minWordLen: currentRoom.minWordLen, duration: currentRoom.duration,
+        });
         break;
       }
+
       case 'restart': {
-        if (!room || playerName !== room.hostName) return;
-        resetRoom(room, { gridSize: msg.gridSize, minWordLen: msg.minWordLen, duration: msg.duration });
-        broadcastAll(room, { type: 'new-round', state: room.state, board: room.board, gridSize: room.gridSize, minWordLen: room.minWordLen, duration: room.duration, players: getPlayerList(room), hostName: room.hostName });
+        if (!currentRoom || playerName !== currentRoom.hostName) return;
+        room.resetRoom(currentRoom, { gridSize: msg.gridSize, minWordLen: msg.minWordLen, duration: msg.duration });
+        broadcastAll(currentRoom, {
+          type: 'new-round', state: currentRoom.state, board: currentRoom.board,
+          gridSize: currentRoom.gridSize, minWordLen: currentRoom.minWordLen,
+          duration: currentRoom.duration, players: room.getPlayerList(currentRoom), hostName: currentRoom.hostName,
+        });
         break;
       }
+
       case 'resume-game': {
-        if (!room || room.state !== 'paused') return;
-        room.state = 'playing';
-        room.timer = setInterval(() => {
-          room.timeLeft--;
-          if (room.timeLeft <= 0) {
-            clearInterval(room.timer);
-            room.state = 'ended';
-            endGame(room);
-          } else {
-            broadcastAll(room, { type: 'tick', timeLeft: room.timeLeft });
-          }
-        }, 1000);
-        broadcastAll(room, { type: 'game-resumed', timeLeft: room.timeLeft });
+        if (!currentRoom || currentRoom.state !== 'paused') return;
+        room.resumeTimer(currentRoom, broadcastAll);
+        broadcastAll(currentRoom, { type: 'game-resumed', timeLeft: currentRoom.timeLeft });
         break;
       }
+
       case 'submit-word': {
-        if (role !== 'player' || !room || room.state !== 'playing') return;
-        const { path: wordPath } = msg;
-        const player = room.players[playerName];
-        if (!wordPath || !Array.isArray(wordPath)) return;
-        if (!isValidPath(wordPath, room.gridSize)) { sendTo(ws, { type: 'word-result', valid: false, reason: 'Invalid path' }); return; }
-        const word = wordPath.map(i => room.board[i] === 'Q' ? 'QU' : room.board[i]).join('');
-        if (word.length < room.minWordLen) { sendTo(ws, { type: 'word-result', valid: false, reason: `Min ${room.minWordLen} letters` }); return; }
-        if (player.words.includes(word)) { sendTo(ws, { type: 'word-result', valid: false, reason: 'Already found' }); return; }
-        if (DICT && !DICT.has(word.toLowerCase())) { sendTo(ws, { type: 'word-result', valid: false, reason: 'Not in dictionary' }); return; }
-        const pts = [0, 0, 0, 2, 3, 5, 8, 13, 21][Math.min(word.length, 8)];
-        player.words.push(word);
-        player.score += pts;
-        sendTo(ws, { type: 'word-result', valid: true, word, points: pts, totalScore: player.score });
-        sendToDisplay(room, { type: 'score-update', players: getPlayerList(room) });
+        if (role !== 'player' || !currentRoom || currentRoom.state !== 'playing') return;
+        const result = room.submitWord(currentRoom, playerName, msg.path);
+        sendTo(ws, { type: 'word-result', ...result });
+        if (result.valid) {
+          sendToDisplay(currentRoom, { type: 'score-update', players: room.getPlayerList(currentRoom) });
+        }
         break;
       }
     }
   });
 
   ws.on('close', () => {
-    // Clean up typing state
-    if (room && room.typing && room.typing.has(ws)) {
-      room.typing.delete(ws);
-      sendToDisplay(room, { type: 'typing-update', count: room.typing.size });
+    if (!currentRoom) return;
+
+    // Clean up typing
+    if (currentRoom.typing.has(ws)) {
+      currentRoom.typing.delete(ws);
+      sendToDisplay(currentRoom, { type: 'typing-update', count: currentRoom.typing.size });
     }
-    if (role === 'player' && room && playerName) {
-      if (room.players[playerName]) room.players[playerName].ws = null;
-      // Pause game if mid-game
-      if (room.state === 'playing') {
-        clearInterval(room.timer);
-        room.state = 'paused';
-        broadcastAll(room, { type: 'game-paused', disconnectedPlayer: playerName, players: getPlayerList(room), hostName: room.hostName });
+
+    if (role === 'player' && playerName) {
+      if (currentRoom.players[playerName]) currentRoom.players[playerName].ws = null;
+
+      // Pause if mid-game
+      if (currentRoom.state === 'playing') {
+        if (currentRoom.timer) clearInterval(currentRoom.timer);
+        currentRoom.timer = null;
+        currentRoom.state = 'paused';
+        broadcastAll(currentRoom, {
+          type: 'game-paused', disconnectedPlayer: playerName,
+          players: room.getPlayerList(currentRoom), hostName: currentRoom.hostName,
+        });
       }
-      if (playerName === room.hostName) {
-        room.hostName = null;
-        assignHost(room);
+
+      if (playerName === currentRoom.hostName) {
+        currentRoom.hostName = null;
+        room.assignHost(currentRoom);
+        broadcastAll(currentRoom, {
+          type: 'host-changed', hostName: currentRoom.hostName,
+          players: room.getPlayerList(currentRoom),
+        });
       }
-      broadcastAll(room, { type: 'player-left', name: playerName, players: getPlayerList(room), hostName: room.hostName });
+
+      broadcastAll(currentRoom, {
+        type: 'player-left', name: playerName,
+        players: room.getPlayerList(currentRoom), hostName: currentRoom.hostName,
+      });
     }
-    if (role === 'display' && room) {
-      room.display = null;
-      // Clean up room if no players connected
-      const connected = Object.values(room.players).filter(p => p.ws && p.ws.readyState === 1);
+
+    if (role === 'display') {
+      currentRoom.display = null;
+      const connected = Object.values(currentRoom.players).filter(p => p.ws && p.ws.readyState === 1);
       if (connected.length === 0) {
-        if (room.timer) clearInterval(room.timer);
-        delete rooms[room.code];
+        room.destroy(currentRoom.code);
       }
     }
   });
+
+  ws.on('error', (err) => {
+    log.error('WebSocket error', { error: err.message });
+  });
 });
 
-// --- Get local IP ---
+// --- Graceful Shutdown ---
+
+function shutdown(signal) {
+  log.info('Shutdown initiated', { signal });
+
+  wss.clients.forEach((ws) => {
+    sendTo(ws, { type: 'error', message: 'Server shutting down' });
+    ws.close(1001, 'Server shutting down');
+  });
+
+  wss.close(() => {
+    server.close(() => {
+      log.info('Server stopped');
+      process.exit(0);
+    });
+  });
+
+  // Force exit after 5s
+  setTimeout(() => {
+    log.warn('Forced shutdown');
+    process.exit(1);
+  }, 5000).unref();
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('uncaughtException', (err) => {
+  log.error('Uncaught exception', { error: err.message, stack: err.stack });
+  shutdown('uncaughtException');
+});
+process.on('unhandledRejection', (reason) => {
+  log.error('Unhandled rejection', { reason: String(reason) });
+});
+
+// --- Startup ---
+
 function getLocalIP() {
   const interfaces = os.networkInterfaces();
   for (const iface of Object.values(interfaces)) {
@@ -459,12 +290,23 @@ function getLocalIP() {
   return 'localhost';
 }
 
-// --- Start ---
-loadDict().then(() => {
-  server.listen(PORT, () => {
+async function start() {
+  await dictionary.load();
+
+  server.listen(config.port, () => {
     const ip = getLocalIP();
-    console.log(`\n🎲 Boggle Party Server running!`);
-    console.log(`   Display screen: http://${ip}:${PORT}/`);
-    console.log(`   Players join:   http://${ip}:${PORT}/play\n`);
+    log.info('Server started', { port: config.port, ip });
+    // Human-friendly output for local dev
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`\n🎲 Boggle Party Server running!`);
+      console.log(`   Display: http://${ip}:${config.port}/`);
+      console.log(`   Players: http://${ip}:${config.port}/play`);
+      console.log(`   Health:  http://${ip}:${config.port}/health\n`);
+    }
   });
+}
+
+start().catch((err) => {
+  log.error('Failed to start', { error: err.message });
+  process.exit(1);
 });

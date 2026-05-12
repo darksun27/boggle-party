@@ -1,10 +1,15 @@
 {
   "name": "boggle-party",
-  "version": "1.0.0",
-  "description": "Multiplayer Boggle party game",
+  "version": "2.0.0",
+  "description": "Multiplayer Boggle party game with real-time WebSocket gameplay",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "production": "NODE_ENV=production node server.js"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   },
   "dependencies": {
     "ws": "^8.16.0"
