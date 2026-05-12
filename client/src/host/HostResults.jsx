@@ -101,14 +101,24 @@ export default function HostResults() {
       </div>
 
       {/* Progress bar */}
-      <div className="flex w-full max-w-2xl h-3 gap-1 mb-6">
+      <div className="flex w-full max-w-2xl h-5 gap-1 mb-8 rounded-full overflow-hidden shadow-lg border border-white/30">
         {numCommon > 0 && (
-          <div className="rounded-l-full bg-white/10 border border-white/20 overflow-hidden" style={{ flex: numCommon }}>
-            <motion.div className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-l-full" animate={{ width: `${progressCommon}%` }} transition={{ duration: 0.3 }} />
+          <div className="bg-purple-900/30 backdrop-blur-sm relative overflow-hidden" style={{ flex: numCommon }}>
+            <motion.div
+              className="h-full rounded-full"
+              style={{ background: 'linear-gradient(90deg, #8b5cf6, #a78bfa)', boxShadow: '0 0 12px rgba(139,92,246,0.5)' }}
+              animate={{ width: `${progressCommon}%` }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+            />
           </div>
         )}
-        <div className="rounded-r-full bg-white/10 border border-white/20 overflow-hidden" style={{ flex: numUnique }}>
-          <motion.div className="h-full bg-gradient-to-r from-pink to-yellow-300 rounded-r-full" animate={{ width: `${progressUnique}%` }} transition={{ duration: 0.3 }} />
+        <div className="bg-yellow-900/20 backdrop-blur-sm relative overflow-hidden" style={{ flex: numUnique }}>
+          <motion.div
+            className="h-full rounded-full"
+            style={{ background: 'linear-gradient(90deg, #ff4ecb, #fbbf24)', boxShadow: '0 0 12px rgba(255,78,203,0.5)' }}
+            animate={{ width: `${progressUnique}%` }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          />
         </div>
       </div>
 
