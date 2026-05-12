@@ -220,13 +220,13 @@ export default function HostResults() {
             className="fixed font-display text-3xl font-bold pointer-events-none z-50"
             style={{ left: fp.startX - 15, top: fp.startY + 20, color: '#fff', textShadow: '0 0 12px rgba(255,78,203,0.9), 0 0 24px rgba(107,33,168,0.7), 0 2px 4px rgba(0,0,0,0.5)' }}
             animate={{
-              x: [0, (fp.endX - fp.startX) * 0.3, fp.endX - fp.startX],
-              y: [0, (fp.endY - fp.startY) * 0.3, fp.endY - fp.startY - 20],
-              scale: [1.2, 1.4, 0.6],
-              opacity: [1, 1, 0.7],
+              x: fp.endX - fp.startX,
+              y: fp.endY - fp.startY - 20,
+              scale: 0.6,
+              opacity: 0.7,
             }}
             exit={{ opacity: 0, scale: 0 }}
-            transition={{ duration: 0.7, ease: 'easeInOut' }}
+            transition={{ duration: 0.7, ease: [0.32, 0, 0.67, 0] }}
           >
             +{fp.pts}
           </motion.div>
