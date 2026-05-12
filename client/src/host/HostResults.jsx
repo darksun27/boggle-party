@@ -226,7 +226,7 @@ export default function HostResults() {
               opacity: [1, 1, 0.7],
             }}
             exit={{ opacity: 0, scale: 0 }}
-            transition={{ duration: 1, ease: 'easeInOut' }}
+            transition={{ duration: 0.7, ease: 'easeInOut' }}
           >
             +{fp.pts}
           </motion.div>
