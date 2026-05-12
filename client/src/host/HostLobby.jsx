@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../shared/GameContext';
+import Avatar from '../shared/Avatar';
 
 const floatVariants = {
   animate: (i) => ({
@@ -31,11 +32,7 @@ function PlayerCard({ player, index }) {
         variants={floatVariants}
         animate="animate"
       >
-        <img
-          className="w-16 h-16 rounded-full border-2 border-white/60 shadow-lg"
-          src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${player.name}&backgroundColor=b6e3f4,c0aede,d1d4f9`}
-          alt={player.name}
-        />
+        <Avatar name={player.name} size={64} />
         <span className="text-xs font-bold mt-1 truncate w-full text-center">{player.name}</span>
         {player.isHost && (
           <span className="text-[10px] bg-gradient-to-r from-pink to-purple-400 text-white px-2 py-0.5 rounded mt-1 font-bold">HOST</span>

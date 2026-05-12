@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../shared/GameContext';
+import Avatar from '../shared/Avatar';
 
 export default function HostResults() {
   const { state } = useGame();
@@ -38,11 +39,7 @@ export default function HostResults() {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: i * 0.3, type: 'spring' }}
           >
-            <img
-              className="w-16 h-16 rounded-full border-3 border-white/60 shadow-lg mb-2"
-              src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${name}&backgroundColor=b6e3f4,c0aede,d1d4f9`}
-              alt={name}
-            />
+            <Avatar name={name} size={64} />
             <div className="font-semibold text-sm">{name}</div>
             <div className="font-display font-bold text-accent">{data.score} pts</div>
             <motion.div

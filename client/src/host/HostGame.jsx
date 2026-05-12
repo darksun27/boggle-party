@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useGame } from '../shared/GameContext';
+import Avatar from '../shared/Avatar';
 
 export default function HostGame() {
   const { state } = useGame();
@@ -51,11 +52,7 @@ export default function HostGame() {
             transition={{ type: 'spring', stiffness: 300 }}
           >
             <span className="font-display text-sm opacity-50 w-6">#{i + 1}</span>
-            <img
-              className="w-8 h-8 rounded-full"
-              src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${p.name}&backgroundColor=b6e3f4,c0aede,d1d4f9`}
-              alt={p.name}
-            />
+            <Avatar name={p.name} size={32} />
             <span className="flex-1 font-semibold">{p.name}</span>
             <span className="font-display font-bold text-accent">{p.score}</span>
             <span className="text-xs opacity-50">{p.wordCount}w</span>

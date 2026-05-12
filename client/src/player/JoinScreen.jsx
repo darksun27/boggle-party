@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useGame } from '../shared/GameContext';
 
 export default function JoinScreen() {
-  const { send, state } = useGame();
+  const { send, state, connected } = useGame();
   const [name, setName] = useState('');
   const code = new URLSearchParams(window.location.search).get('room') || '';
+
+  // Notify host that someone is on the join screen
+  useEffect(() => {
+    if (connected && code) {
+      send({ type: 'joining', code });
+    }
+  }, [connected, code, send]);
 
   const handleJoin = () => {
     if (!code) return;
