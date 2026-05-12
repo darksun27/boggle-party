@@ -164,52 +164,53 @@ export default function HostResults() {
         </div>
       </div>
 
-      {/* Board with highlighted path */}
-      {state.board && (
-        <div className="grid gap-1.5 mb-4" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
-          {state.board.map((letter, i) => {
-            const pathIdx = currentWord && currentWord.path ? currentWord.path.indexOf(i) : -1;
-            const isHighlighted = pathIdx !== -1;
-            return (
-              <motion.div
-                key={i}
-                className="w-10 h-10 flex items-center justify-center text-sm font-bold rounded-lg border"
-                animate={{
-                  backgroundColor: isHighlighted ? getWordStyle(currentWord.word).color : 'rgba(255,255,255,0.25)',
-                  borderColor: isHighlighted ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)',
-                  scale: isHighlighted ? 1.1 : 1,
-                }}
-                transition={{ duration: 0.2 }}
-                style={{ color: isHighlighted ? '#fff' : 'rgba(45,27,78,0.6)' }}
-              >
-                {letter === 'Q' ? 'Qu' : letter}
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
+      {/* Board + Word - centered on screen */}
+      <div ref={stageRef} className="fixed top-[18%] left-1/2 -translate-x-1/2 flex flex-col items-center">
+        {state.board && (
+          <div className="grid gap-1.5 mb-4" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
+            {state.board.map((letter, i) => {
+              const pathIdx = currentWord && currentWord.path ? currentWord.path.indexOf(i) : -1;
+              const isHighlighted = pathIdx !== -1;
+              return (
+                <motion.div
+                  key={i}
+                  className="w-10 h-10 flex items-center justify-center text-sm font-bold rounded-lg border"
+                  animate={{
+                    backgroundColor: isHighlighted ? getWordStyle(currentWord.word).color : 'rgba(255,255,255,0.25)',
+                    borderColor: isHighlighted ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)',
+                    scale: isHighlighted ? 1.1 : 1,
+                  }}
+                  transition={{ duration: 0.2 }}
+                  style={{ color: isHighlighted ? '#fff' : 'rgba(45,27,78,0.6)' }}
+                >
+                  {letter === 'Q' ? 'Qu' : letter}
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
-      {/* Stage word */}
-      <div ref={stageRef} className="h-20 flex items-center justify-center mb-4">
-        <AnimatePresence mode="wait">
-          {currentWord && (
-            <motion.div
-              key={currentWord.word}
-              className="font-display text-5xl font-bold"
-              style={{
-                color: '#fff',
-                textShadow: `0 0 20px ${getWordStyle(currentWord.word).color}, 0 0 40px ${getWordStyle(currentWord.word).color}, 0 2px 4px rgba(0,0,0,0.4)`,
-                WebkitTextStroke: `1px ${getWordStyle(currentWord.word).color}`,
-              }}
-              initial={{ scale: 0, rotate: -5 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 0, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-            >
-              {currentWord.word}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="h-16 flex items-center justify-center">
+          <AnimatePresence mode="wait">
+            {currentWord && (
+              <motion.div
+                key={currentWord.word}
+                className="font-display text-5xl font-bold"
+                style={{
+                  color: '#fff',
+                  textShadow: `0 0 20px ${getWordStyle(currentWord.word).color}, 0 0 40px ${getWordStyle(currentWord.word).color}, 0 2px 4px rgba(0,0,0,0.4)`,
+                  WebkitTextStroke: `1px ${getWordStyle(currentWord.word).color}`,
+                }}
+                initial={{ scale: 0, rotate: -5 }}
+                animate={{ scale: 1, rotate: 0 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+              >
+                {currentWord.word}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* Flying points */}
@@ -260,7 +261,7 @@ export default function HostResults() {
       </AnimatePresence>
 
       {/* Bar chart - fixed to bottom */}
-      <div className="fixed bottom-0 left-0 right-0 flex items-end justify-center gap-12 px-10 h-[45vh]">
+      <div className="fixed bottom-0 left-0 right-0 flex items-end justify-center gap-12 px-10 h-[55vh]">
         {entries.map(([name]) => {
           const score = runningScores[name] || 0;
           const barHeight = maxScore > 0 ? Math.max(10, (score / maxScore) * 180) : 10;
