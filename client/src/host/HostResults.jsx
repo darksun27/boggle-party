@@ -160,8 +160,33 @@ export default function HostResults() {
         </div>
       </div>
 
+      {/* Board with highlighted path */}
+      {state.board && (
+        <div className="grid gap-1.5 mb-4" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
+          {state.board.map((letter, i) => {
+            const pathIdx = currentWord && currentWord.path ? currentWord.path.indexOf(i) : -1;
+            const isHighlighted = pathIdx !== -1;
+            return (
+              <motion.div
+                key={i}
+                className="w-10 h-10 flex items-center justify-center text-sm font-bold rounded-lg border"
+                animate={{
+                  backgroundColor: isHighlighted ? getWordStyle(currentWord.word).color : 'rgba(255,255,255,0.25)',
+                  borderColor: isHighlighted ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)',
+                  scale: isHighlighted ? 1.1 : 1,
+                }}
+                transition={{ delay: isHighlighted ? pathIdx * 0.06 : 0, duration: 0.2 }}
+                style={{ color: isHighlighted ? '#fff' : 'rgba(45,27,78,0.6)' }}
+              >
+                {letter === 'Q' ? 'Qu' : letter}
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Stage word */}
-      <div ref={stageRef} className="h-24 flex items-center justify-center mb-6">
+      <div ref={stageRef} className="h-20 flex items-center justify-center mb-4">
         <AnimatePresence mode="wait">
           {currentWord && (
             <motion.div
@@ -182,31 +207,6 @@ export default function HostResults() {
           )}
         </AnimatePresence>
       </div>
-
-      {/* Board with highlighted path */}
-      {state.board && currentWord && currentWord.path && currentWord.path.length > 0 && (
-        <div className="grid gap-1.5 mb-4" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
-          {state.board.map((letter, i) => {
-            const pathIdx = currentWord.path.indexOf(i);
-            const isHighlighted = pathIdx !== -1;
-            return (
-              <motion.div
-                key={i}
-                className="w-10 h-10 flex items-center justify-center text-sm font-bold rounded-lg border"
-                animate={{
-                  backgroundColor: isHighlighted ? getWordStyle(currentWord.word).color : 'rgba(255,255,255,0.25)',
-                  borderColor: isHighlighted ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)',
-                  scale: isHighlighted ? 1.1 : 1,
-                }}
-                transition={{ delay: isHighlighted ? pathIdx * 0.06 : 0, duration: 0.2 }}
-                style={{ color: isHighlighted ? '#fff' : 'rgba(45,27,78,0.6)' }}
-              >
-                {letter === 'Q' ? 'Qu' : letter}
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
 
       {/* Flying points */}
       <AnimatePresence>
