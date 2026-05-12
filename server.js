@@ -31,13 +31,18 @@ const server = http.createServer((req, res) => {
     fs.readFile(filePath, 'utf8', (err, html) => {
       if (err) { res.writeHead(500); res.end('Error'); return; }
       const script = `<script>
+        // Board layout:
+        // C A T S
+        // R E A L
+        // D E N T
+        // S T A R
         window.__TEST_RESULTS__ = {
           results: {
-            "Alice": { words: [{word:"STAR",path:[0,1,5,4]},{word:"RATE",path:[2,5,1,3]},{word:"TEAR",path:[1,3,5,2]},{word:"STREAM",path:[0,1,2,3,5,6]},{word:"REAL",path:[2,3,5,8]},{word:"DEAL",path:[6,3,5,8]},{word:"CREAM",path:[7,2,3,5,6]}], score: 28 },
-            "Bob": { words: [{word:"STAR",path:[0,1,5,4]},{word:"RATE",path:[2,5,1,3]},{word:"HEAT",path:[12,3,5,1]},{word:"MEAN",path:[6,3,5,9]},{word:"LEAN",path:[8,3,5,9]},{word:"CLEAN",path:[7,8,3,5,9]}], score: 22 },
-            "Charlie": { words: [{word:"STAR",path:[0,1,5,4]},{word:"DEAL",path:[6,3,5,8]},{word:"STEAM",path:[0,1,3,5,6]},{word:"DREAM",path:[6,2,3,5,6]},{word:"NEAR",path:[9,3,5,2]}], score: 20 }
+            "Alice": { words: [{word:"STAR",path:[12,13,14,15]},{word:"RATE",path:[4,5,13,14]},{word:"REAL",path:[4,5,6,7]},{word:"DEAL",path:[8,5,6,7]},{word:"RENT",path:[4,5,10,11]},{word:"DENT",path:[8,9,10,11]},{word:"STEAL",path:[12,11,5,6,7]}], score: 26 },
+            "Bob": { words: [{word:"STAR",path:[12,13,14,15]},{word:"RATE",path:[4,5,13,14]},{word:"NEAT",path:[10,5,6,13]},{word:"LEAN",path:[7,5,6,10]},{word:"CATS",path:[0,1,2,3]}], score: 18 },
+            "Charlie": { words: [{word:"STAR",path:[12,13,14,15]},{word:"DEAL",path:[8,9,6,7]},{word:"RENT",path:[4,5,10,11]},{word:"ATE",path:[1,2,5]}], score: 13 }
           },
-          board: ["S","T","R","E","A","M","D","C","L","E","A","N","H","R","I","G"],
+          board: ["C","A","T","S","R","E","A","L","D","E","N","T","S","T","A","R"],
           gridSize: 4
         };
       </script>`;
