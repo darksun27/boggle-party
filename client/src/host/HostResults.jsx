@@ -164,9 +164,9 @@ export default function HostResults() {
         </div>
       </div>
 
-      {/* Board - top area */}
+      {/* Board - below progress bar */}
       {state.board && (
-        <div className="fixed top-[8%] left-1/2 -translate-x-1/2">
+        <div className="fixed top-[22%] left-1/2 -translate-x-1/2">
           <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
             {state.board.map((letter, i) => {
               const pathIdx = currentWord && currentWord.path ? currentWord.path.indexOf(i) : -1;
