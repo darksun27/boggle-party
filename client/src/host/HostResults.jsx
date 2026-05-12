@@ -141,6 +141,7 @@ export default function HostResults() {
       </h2>
 
       {/* 2. Progress bar */}
+      {!showWinner && <>
       <div className="flex justify-between w-full max-w-xl text-xs mb-1 px-1">
         {numCommon > 0 && <span className="text-purple-600">🤝 {numCommon} common</span>}
         <span className="text-yellow-600 ml-auto">⭐ {numUnique} unique</span>
@@ -155,6 +156,7 @@ export default function HostResults() {
           <motion.div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #ff4ecb, #fbbf24)', boxShadow: '0 0 12px rgba(255,78,203,0.5)' }} animate={{ width: `${progressUnique}%` }} transition={{ duration: 0.4 }} />
         </div>
       </div>
+      </>}
 
       {/* 3. Board */}
       {state.board && !showWinner && (
@@ -215,12 +217,18 @@ export default function HostResults() {
 
       {/* 5. Player scores */}
       <div className="flex items-end justify-center gap-10 flex-1 w-full max-w-3xl">
-        {entries.map(([name]) => {
+        {entries.map(([name], idx) => {
           const score = runningScores[name] || 0;
           const barHeight = maxScore > 0 ? Math.max(10, (score / maxScore) * 150) : 10;
+          const isWinner = showWinner && idx === 0;
           return (
             <div key={name} className="flex flex-col items-center flex-1 max-w-[120px] justify-end h-full">
-              <Avatar name={name} size={56} className="mb-1" />
+              <motion.div
+                animate={isWinner ? { scale: [1, 1.3, 1], rotate: [0, -5, 5, 0] } : {}}
+                transition={isWinner ? { duration: 0.6, repeat: Infinity, repeatDelay: 1 } : {}}
+              >
+                <Avatar name={name} size={56} className="mb-1" />
+              </motion.div>
               <span className="text-sm font-semibold truncate w-full text-center mb-1">{name}</span>
               <span className="font-display text-3xl font-bold text-accent">{score}</span>
               <motion.div
