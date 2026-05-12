@@ -107,7 +107,7 @@ export default function HostResults() {
             id,
             pts,
             startX: stageRect.left + stageRect.width / 2,
-            startY: stageRect.top + stageRect.height / 2,
+            startY: stageRect.bottom + 10,
             endX: barRect.left + barRect.width / 2,
             endY: barRect.top,
           }]);
@@ -164,10 +164,10 @@ export default function HostResults() {
         </div>
       </div>
 
-      {/* Board + Word - centered on screen */}
-      <div ref={stageRef} className="fixed top-[18%] left-1/2 -translate-x-1/2 flex flex-col items-center">
-        {state.board && (
-          <div className="grid gap-1.5 mb-4" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
+      {/* Board - top area */}
+      {state.board && (
+        <div className="fixed top-[8%] left-1/2 -translate-x-1/2">
+          <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
             {state.board.map((letter, i) => {
               const pathIdx = currentWord && currentWord.path ? currentWord.path.indexOf(i) : -1;
               const isHighlighted = pathIdx !== -1;
@@ -188,29 +188,30 @@ export default function HostResults() {
               );
             })}
           </div>
-        )}
-
-        <div className="h-16 flex items-center justify-center">
-          <AnimatePresence mode="wait">
-            {currentWord && (
-              <motion.div
-                key={currentWord.word}
-                className="font-display text-5xl font-bold"
-                style={{
-                  color: '#fff',
-                  textShadow: `0 0 20px ${getWordStyle(currentWord.word).color}, 0 0 40px ${getWordStyle(currentWord.word).color}, 0 2px 4px rgba(0,0,0,0.4)`,
-                  WebkitTextStroke: `1px ${getWordStyle(currentWord.word).color}`,
-                }}
-                initial={{ scale: 0, rotate: -5 }}
-                animate={{ scale: 1, rotate: 0 }}
-                exit={{ scale: 0, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-              >
-                {currentWord.word}
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
+      )}
+
+      {/* Word - center of screen */}
+      <div ref={stageRef} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <AnimatePresence mode="wait">
+          {currentWord && (
+            <motion.div
+              key={currentWord.word}
+              className="font-display text-5xl font-bold"
+              style={{
+                color: '#fff',
+                textShadow: `0 0 20px ${getWordStyle(currentWord.word).color}, 0 0 40px ${getWordStyle(currentWord.word).color}, 0 2px 4px rgba(0,0,0,0.4)`,
+                WebkitTextStroke: `1px ${getWordStyle(currentWord.word).color}`,
+              }}
+              initial={{ scale: 0, rotate: -5 }}
+              animate={{ scale: 1, rotate: 0 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+            >
+              {currentWord.word}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Flying points */}
