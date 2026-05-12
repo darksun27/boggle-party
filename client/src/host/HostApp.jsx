@@ -4,7 +4,6 @@ import { useGame } from '../shared/GameContext';
 import HostLobby from './HostLobby';
 import HostGame from './HostGame';
 import HostResults from './HostResults';
-import './host.css';
 
 function EnterScreen({ onEnter }) {
   const handleEnter = () => {

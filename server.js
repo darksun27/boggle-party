@@ -25,7 +25,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (url === '/test-results') {
+  if (url === '/test-results' && process.env.NODE_ENV !== 'production') {
     // Serve host.html but the WS will receive dummy game-end data
     const filePath = path.join(DIST_DIR, 'host.html');
     fs.readFile(filePath, 'utf8', (err, html) => {
