@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useCallback, useRef } from 'react';
+import { createContext, useContext, useReducer, useCallback } from 'react';
 import { useWebSocket } from './useWebSocket';
 
 const GameContext = createContext(null);
@@ -27,6 +27,7 @@ const initialState = {
 };
 
 function reducer(state, action) {
+  console.log('[Reducer]', action.type, action);
   switch (action.type) {
     case 'ROOM_CREATED':
       return { ...state, screen: 'lobby', roomCode: action.code, gridSize: action.gridSize, minWordLen: action.minWordLen, duration: action.duration };
@@ -70,40 +71,41 @@ function reducer(state, action) {
 
 export function GameProvider({ children, role }) {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const onConnectRef = useRef(null);
 
   const onMessage = useCallback((msg) => {
     switch (msg.type) {
-      case 'room-created': dispatch({ type: 'ROOM_CREATED', ...msg }); break;
-      case 'joined': dispatch({ type: 'JOINED', ...msg, state: msg.state }); break;
+      case 'room-created': dispatch({ ...msg, type: 'ROOM_CREATED' }); break;
+      case 'joined': dispatch({ ...msg, type: 'JOINED' }); break;
       case 'player-joined':
       case 'player-left':
       case 'score-update':
         dispatch({ type: msg.type === 'score-update' ? 'SCORE_UPDATE' : 'PLAYER_LIST', players: msg.players, hostName: msg.hostName }); break;
-      case 'host-changed': dispatch({ type: 'HOST_CHANGED', ...msg }); break;
+      case 'host-changed': dispatch({ ...msg, type: 'HOST_CHANGED' }); break;
       case 'typing-update': dispatch({ type: 'TYPING_UPDATE', count: msg.count }); break;
-      case 'settings-changed': dispatch({ type: 'SETTINGS_CHANGED', ...msg }); break;
-      case 'game-start': dispatch({ type: 'GAME_START', ...msg }); break;
+      case 'settings-changed': dispatch({ ...msg, type: 'SETTINGS_CHANGED' }); break;
+      case 'game-start': dispatch({ ...msg, type: 'GAME_START' }); break;
       case 'tick': dispatch({ type: 'TICK', timeLeft: msg.timeLeft }); break;
-      case 'word-result': dispatch({ type: 'WORD_RESULT', ...msg }); break;
-      case 'game-end': dispatch({ type: 'GAME_END', ...msg }); break;
-      case 'new-round': dispatch({ type: 'NEW_ROUND', ...msg }); break;
-      case 'game-paused': dispatch({ type: 'GAME_PAUSED', ...msg }); break;
-      case 'game-resumed': dispatch({ type: 'GAME_RESUMED', ...msg }); break;
+      case 'word-result': dispatch({ ...msg, type: 'WORD_RESULT' }); break;
+      case 'game-end': dispatch({ ...msg, type: 'GAME_END' }); break;
+      case 'new-round': dispatch({ ...msg, type: 'NEW_ROUND' }); break;
+      case 'game-paused': dispatch({ ...msg, type: 'GAME_PAUSED' }); break;
+      case 'game-resumed': dispatch({ ...msg, type: 'GAME_RESUMED' }); break;
       case 'error': dispatch({ type: 'ERROR', message: msg.message }); break;
     }
   }, []);
 
   const onConnect = useCallback((ws) => {
-    if (onConnectRef.current) onConnectRef.current(ws);
-  }, []);
+    console.log('[Game] onConnect fired, role:', role);
+    if (role === 'host') {
+      console.log('[Game] Sending create-room directly on ws');
+      ws.send(JSON.stringify({ type: 'create-room' }));
+    }
+  }, [role]);
 
   const { send, connected } = useWebSocket(onMessage, onConnect);
 
-  const setOnConnect = useCallback((fn) => { onConnectRef.current = fn; }, []);
-
   return (
-    <GameContext.Provider value={{ state, send, connected, dispatch, setOnConnect }}>
+    <GameContext.Provider value={{ state, send, connected, dispatch }}>
       {children}
     </GameContext.Provider>
   );
