@@ -154,6 +154,7 @@ export default function HostResults() {
       </div>
 
       {/* 3. Board */}
+      <div className="flex-1" />
       {state.board && (
         <div className="grid gap-1.5 mb-4" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
           {state.board.map((letter, i) => {
