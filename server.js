@@ -38,9 +38,9 @@ const server = http.createServer((req, res) => {
         // S T A R
         window.__TEST_RESULTS__ = {
           results: {
-            "Alice": { words: [{word:"STAR",path:[12,13,14,15]},{word:"RATE",path:[4,5,13,14]},{word:"REAL",path:[4,5,6,7]},{word:"DEAL",path:[8,5,6,7]},{word:"RENT",path:[4,5,10,11]},{word:"DENT",path:[8,9,10,11]},{word:"STEAL",path:[12,11,5,6,7]}], score: 26 },
-            "Bob": { words: [{word:"STAR",path:[12,13,14,15]},{word:"RATE",path:[4,5,13,14]},{word:"NEAT",path:[10,5,6,13]},{word:"LEAN",path:[7,5,6,10]},{word:"CATS",path:[0,1,2,3]}], score: 18 },
-            "Charlie": { words: [{word:"STAR",path:[12,13,14,15]},{word:"DEAL",path:[8,9,6,7]},{word:"RENT",path:[4,5,10,11]},{word:"ATE",path:[1,2,5]}], score: 13 }
+            "Alice": { words: [{word:"STAR",path:[12,13,14,15]},{word:"RATE",path:[4,5,13,14]},{word:"REAL",path:[4,5,6,7]},{word:"DEAL",path:[8,5,6,7]},{word:"RENT",path:[4,5,10,11]},{word:"DENT",path:[8,9,10,11]},{word:"STEAL",path:[12,11,5,6,7]},{word:"STARE",path:[12,13,14,15,4]},{word:"RENTAL",path:[4,5,10,11,14,7]}], score: 38 },
+            "Bob": { words: [{word:"STAR",path:[12,13,14,15]},{word:"RATE",path:[4,5,13,14]},{word:"NEAT",path:[10,9,6,13]},{word:"LEAN",path:[7,5,6,10]},{word:"CATS",path:[0,1,2,3]},{word:"CRATE",path:[0,4,5,13,14]},{word:"STARED",path:[12,13,14,15,4,8]}], score: 28 },
+            "Charlie": { words: [{word:"STAR",path:[12,13,14,15]},{word:"DEAL",path:[8,9,6,7]},{word:"RENT",path:[4,5,10,11]},{word:"ATE",path:[1,2,5]},{word:"RENTED",path:[4,5,10,11,9,8]},{word:"DENTAL",path:[8,9,10,11,14,7]}], score: 27 }
           },
           board: ["C","A","T","S","R","E","A","L","D","E","N","T","S","T","A","R"],
           gridSize: 4
