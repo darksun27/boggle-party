@@ -267,18 +267,14 @@ export default function HostResults() {
           return (
             <div key={name} className="flex flex-col items-center flex-1 max-w-[120px] h-full justify-end">
               <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 0.3 }}
-                key={score}
+                animate={{ scale: 1 }}
+                whileTap={{ scale: 1.2 }}
               >
                 <Avatar name={name} size={64} className="mb-2" />
               </motion.div>
               <span className="text-sm font-semibold truncate w-full text-center mb-1">{name}</span>
               <motion.span
                 className="font-display text-xl font-bold text-accent"
-                key={score}
-                animate={{ scale: [1, 1.4, 1] }}
-                transition={{ duration: 0.3 }}
               >
                 {score}
               </motion.span>
