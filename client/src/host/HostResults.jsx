@@ -217,7 +217,7 @@ export default function HostResults() {
         {flyingPoints.map(fp => (
           <motion.div
             key={fp.id}
-            className="fixed font-display text-3xl font-bold pointer-events-none z-50"
+            className="fixed font-display text-4xl font-bold pointer-events-none z-50"
             style={{ left: fp.startX - 15, top: fp.startY + 20, color: '#fff', textShadow: '0 0 12px rgba(255,78,203,0.9), 0 0 24px rgba(107,33,168,0.7), 0 2px 4px rgba(0,0,0,0.5)' }}
             animate={{
               x: [0, (fp.endX - fp.startX) * 0.5 + (fp.endX > fp.startX ? -80 : 80), fp.endX - fp.startX],
@@ -260,16 +260,22 @@ export default function HostResults() {
       </AnimatePresence>
 
       {/* Bar chart - fixed to bottom */}
-      <div className="fixed bottom-0 left-0 right-0 flex items-end justify-center gap-4 px-5 h-[45vh]">
+      <div className="fixed bottom-0 left-0 right-0 flex items-end justify-center gap-8 px-8 h-[45vh]">
         {entries.map(([name]) => {
           const score = runningScores[name] || 0;
           const barHeight = maxScore > 0 ? Math.max(10, (score / maxScore) * 180) : 10;
           return (
-            <div key={name} className="flex flex-col items-center flex-1 max-w-[100px] h-full justify-end">
-              <Avatar name={name} size={48} className="mb-1" />
-              <span className="text-xs font-semibold truncate w-full text-center">{name}</span>
+            <div key={name} className="flex flex-col items-center flex-1 max-w-[120px] h-full justify-end">
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 0.3 }}
+                key={score}
+              >
+                <Avatar name={name} size={64} className="mb-2" />
+              </motion.div>
+              <span className="text-sm font-semibold truncate w-full text-center mb-1">{name}</span>
               <motion.span
-                className="font-display text-sm font-bold text-accent"
+                className="font-display text-xl font-bold text-accent"
                 key={score}
                 animate={{ scale: [1, 1.4, 1] }}
                 transition={{ duration: 0.3 }}
