@@ -158,14 +158,14 @@ export default function HostResults() {
 
       {/* 3. Board */}
       {state.board && (
-        <div className="grid gap-1.5 mb-4" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
+        <div className="grid gap-2 mb-6" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
           {state.board.map((letter, i) => {
             const pathIdx = currentWord && currentWord.path ? currentWord.path.indexOf(i) : -1;
             const isHighlighted = pathIdx !== -1;
             return (
               <motion.div
                 key={i}
-                className="w-10 h-10 flex items-center justify-center text-sm font-bold rounded-lg border"
+                className="w-16 h-16 flex items-center justify-center text-2xl font-bold rounded-xl border"
                 animate={{
                   backgroundColor: isHighlighted ? getWordStyle(currentWord.word).color : 'rgba(255,255,255,0.25)',
                   borderColor: isHighlighted ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)',
@@ -182,12 +182,12 @@ export default function HostResults() {
       )}
 
       {/* 4. Word */}
-      <div ref={stageRef} className="h-16 flex items-center justify-center mb-4">
+      <div ref={stageRef} className="h-24 flex items-center justify-center mb-4">
         <AnimatePresence mode="wait">
           {currentWord && (
             <motion.div
               key={currentWord.word}
-              className="font-display text-5xl font-bold"
+              className="font-display text-8xl font-bold"
               style={{
                 color: '#fff',
                 textShadow: `0 0 20px ${getWordStyle(currentWord.word).color}, 0 0 40px ${getWordStyle(currentWord.word).color}, 0 2px 4px rgba(0,0,0,0.4)`,
