@@ -131,68 +131,55 @@ export default function HostResults() {
   const numUnique = totalWords - numCommon;
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-4">
-      <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-pink via-yellow-300 to-cyan-300 bg-clip-text text-transparent mb-4">
+    <div className="flex flex-col items-center h-screen p-4 overflow-hidden">
+      {/* 1. Title */}
+      <h2 className="font-display text-2xl font-bold bg-gradient-to-r from-pink via-yellow-300 to-cyan-300 bg-clip-text text-transparent mb-2">
         🏁 RACE RESULTS!
       </h2>
 
-      {/* Progress bar labels */}
-      <div className="flex justify-between w-full max-w-2xl text-sm mb-1 px-1">
+      {/* 2. Progress bar */}
+      <div className="flex justify-between w-full max-w-xl text-xs mb-1 px-1">
         {numCommon > 0 && <span className="text-purple-600">🤝 {numCommon} common</span>}
         <span className="text-yellow-600 ml-auto">⭐ {numUnique} unique</span>
       </div>
-
-      {/* Progress bar */}
-      <div className="flex w-full max-w-2xl h-5 gap-1 mb-8 rounded-full overflow-hidden shadow-lg border border-white/30">
+      <div className="flex w-full max-w-xl h-4 gap-1 mb-4 rounded-full overflow-hidden shadow-lg border border-white/30">
         {numCommon > 0 && (
-          <div className="bg-purple-900/30 backdrop-blur-sm relative overflow-hidden" style={{ flex: numCommon }}>
-            <motion.div
-              className="h-full rounded-full"
-              style={{ background: 'linear-gradient(90deg, #8b5cf6, #a78bfa)', boxShadow: '0 0 12px rgba(139,92,246,0.5)' }}
-              animate={{ width: `${progressCommon}%` }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-            />
+          <div className="bg-purple-900/30 backdrop-blur-sm overflow-hidden" style={{ flex: numCommon }}>
+            <motion.div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #8b5cf6, #a78bfa)', boxShadow: '0 0 12px rgba(139,92,246,0.5)' }} animate={{ width: `${progressCommon}%` }} transition={{ duration: 0.4 }} />
           </div>
         )}
-        <div className="bg-yellow-900/20 backdrop-blur-sm relative overflow-hidden" style={{ flex: numUnique || 1 }}>
-          <motion.div
-            className="h-full rounded-full"
-            style={{ background: 'linear-gradient(90deg, #ff4ecb, #fbbf24)', boxShadow: '0 0 12px rgba(255,78,203,0.5)' }}
-            animate={{ width: `${progressUnique}%` }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-          />
+        <div className="bg-yellow-900/20 backdrop-blur-sm overflow-hidden" style={{ flex: numUnique || 1 }}>
+          <motion.div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #ff4ecb, #fbbf24)', boxShadow: '0 0 12px rgba(255,78,203,0.5)' }} animate={{ width: `${progressUnique}%` }} transition={{ duration: 0.4 }} />
         </div>
       </div>
 
-      {/* Board - below progress bar */}
+      {/* 3. Board */}
       {state.board && (
-        <div className="fixed top-[22%] left-1/2 -translate-x-1/2">
-          <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
-            {state.board.map((letter, i) => {
-              const pathIdx = currentWord && currentWord.path ? currentWord.path.indexOf(i) : -1;
-              const isHighlighted = pathIdx !== -1;
-              return (
-                <motion.div
-                  key={i}
-                  className="w-10 h-10 flex items-center justify-center text-sm font-bold rounded-lg border"
-                  animate={{
-                    backgroundColor: isHighlighted ? getWordStyle(currentWord.word).color : 'rgba(255,255,255,0.25)',
-                    borderColor: isHighlighted ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)',
-                    scale: isHighlighted ? 1.1 : 1,
-                  }}
-                  transition={{ duration: 0.2 }}
-                  style={{ color: isHighlighted ? '#fff' : 'rgba(45,27,78,0.6)' }}
-                >
-                  {letter === 'Q' ? 'Qu' : letter}
-                </motion.div>
-              );
-            })}
-          </div>
+        <div className="grid gap-1.5 mb-4" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
+          {state.board.map((letter, i) => {
+            const pathIdx = currentWord && currentWord.path ? currentWord.path.indexOf(i) : -1;
+            const isHighlighted = pathIdx !== -1;
+            return (
+              <motion.div
+                key={i}
+                className="w-10 h-10 flex items-center justify-center text-sm font-bold rounded-lg border"
+                animate={{
+                  backgroundColor: isHighlighted ? getWordStyle(currentWord.word).color : 'rgba(255,255,255,0.25)',
+                  borderColor: isHighlighted ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)',
+                  scale: isHighlighted ? 1.1 : 1,
+                }}
+                transition={{ duration: 0.2 }}
+                style={{ color: isHighlighted ? '#fff' : 'rgba(45,27,78,0.6)' }}
+              >
+                {letter === 'Q' ? 'Qu' : letter}
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
-      {/* Word - center of screen */}
-      <div ref={stageRef} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+      {/* 4. Word */}
+      <div ref={stageRef} className="h-16 flex items-center justify-center mb-4">
         <AnimatePresence mode="wait">
           {currentWord && (
             <motion.div
@@ -212,6 +199,38 @@ export default function HostResults() {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+
+      {/* Winner banner */}
+      <AnimatePresence>
+        {showWinner && entries.length > 0 && (
+          <motion.div className="flex flex-col items-center gap-3 mb-4" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }}>
+            <div className="font-display text-3xl text-pink font-bold">👑 {entries[0][0]} WINS! 👑</div>
+            <motion.button className="btn-primary px-8 py-3 text-lg rounded-xl" onClick={() => send({ type: 'restart', gridSize: state.gridSize, minWordLen: state.minWordLen, duration: state.duration })} whileTap={{ scale: 0.95 }}>Next Round</motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 5. Player scores */}
+      <div className="flex items-end justify-center gap-10 flex-1 w-full max-w-3xl pb-4">
+        {entries.map(([name]) => {
+          const score = runningScores[name] || 0;
+          const barHeight = maxScore > 0 ? Math.max(10, (score / maxScore) * 150) : 10;
+          return (
+            <div key={name} className="flex flex-col items-center flex-1 max-w-[120px] justify-end h-full">
+              <Avatar name={name} size={56} className="mb-1" />
+              <span className="text-sm font-semibold truncate w-full text-center mb-1">{name}</span>
+              <span className="font-display text-3xl font-bold text-accent">{score}</span>
+              <motion.div
+                ref={el => { barRefs.current[name] = el; }}
+                className="w-full rounded-t-xl border border-white/40"
+                style={{ background: 'linear-gradient(180deg, rgba(255,78,203,0.5), rgba(107,33,168,0.5))' }}
+                animate={{ height: barHeight }}
+                transition={{ type: 'spring', stiffness: 150, damping: 12, mass: 0.8 }}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {/* Flying points */}
@@ -235,64 +254,7 @@ export default function HostResults() {
         ))}
       </AnimatePresence>
 
-      {/* Winner banner + Next Round */}
-      <AnimatePresence>
-        {showWinner && entries.length > 0 && (
-          <motion.div
-            className="flex flex-col items-center gap-4 mb-6"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-          >
-            <div className="font-display text-3xl text-pink font-bold">
-              👑 {entries[0][0]} WINS! 👑
-            </div>
-            <motion.button
-              className="btn-primary px-8 py-3 text-lg rounded-xl"
-              onClick={() => send({ type: 'restart', gridSize: state.gridSize, minWordLen: state.minWordLen, duration: state.duration })}
-              whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              Next Round
-            </motion.button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Bar chart - fixed to bottom */}
-      <div className="fixed bottom-0 left-0 right-0 flex items-end justify-center gap-12 px-10 h-[55vh]">
-        {entries.map(([name]) => {
-          const score = runningScores[name] || 0;
-          const barHeight = maxScore > 0 ? Math.max(10, (score / maxScore) * 180) : 10;
-          return (
-            <div key={name} className="flex flex-col items-center flex-1 max-w-[120px] h-full justify-end">
-              <motion.div
-                animate={{ scale: 1 }}
-                whileTap={{ scale: 1.2 }}
-              >
-                <Avatar name={name} size={64} className="mb-2" />
-              </motion.div>
-              <span className="text-sm font-semibold truncate w-full text-center mb-1">{name}</span>
-              <motion.span
-                className="font-display text-4xl font-bold text-accent"
-              >
-                {score}
-              </motion.span>
-              <motion.div
-                ref={el => { barRefs.current[name] = el; }}
-                className="w-full rounded-t-xl border border-white/40"
-                style={{ background: 'linear-gradient(180deg, rgba(255,78,203,0.5), rgba(107,33,168,0.5))' }}
-                animate={{ height: barHeight }}
-                transition={{ type: 'spring', stiffness: 150, damping: 12, mass: 0.8 }}
-              />
-            </div>
-          );
-        })}
-      </div>
-
-      <p className={`fixed bottom-2 text-xs opacity-50 ${showWinner ? '' : 'hidden'}`}>⚡ Waiting for host to start next round...</p>
+      <p className={`text-xs opacity-50 ${showWinner ? '' : 'hidden'}`}>⚡ Waiting for host to start next round...</p>
     </div>
   );
 }
