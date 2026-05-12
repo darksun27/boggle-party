@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../shared/GameContext';
 import Avatar from '../shared/Avatar';
+import { useSounds } from '../shared/useSounds';
 
 const SCORE_TABLE = [0, 0, 0, 2, 3, 5, 8, 13, 21];
 
@@ -21,6 +22,7 @@ function getWordStyle(word) {
 
 export default function HostResults() {
   const { state, send } = useGame();
+  const sfx = useSounds();
   const { results } = state;
   const [revealIdx, setRevealIdx] = useState(-1);
   const [currentWord, setCurrentWord] = useState(null);
@@ -73,12 +75,14 @@ export default function HostResults() {
     if (revealIdx >= sequence.current.length) {
       setCurrentWord(null);
       setShowWinner(true);
+      sfx.gameOver();
       return;
     }
 
     const item = sequence.current[revealIdx];
     const pts = SCORE_TABLE[Math.min(item.word.length, 8)];
     setCurrentWord(item);
+    sfx.click();
 
     if (item.type === 'common') {
       setProgressCommon(((revealIdx + 1) / commonCount.current) * 100);
