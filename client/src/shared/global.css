@@ -1,29 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Orbitron:wght@700&display=swap');
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-:root {
-  --bg: linear-gradient(-45deg, #ff9a9e, #fad0c4, #a18cd1, #fbc2eb, #84fab0, #8fd3f4);
-  --surface: rgba(255,255,255,0.4);
-  --cell: rgba(255,255,255,0.5);
-  --cell-selected: linear-gradient(135deg, #ff4ecb, #a18cd1);
-  --text: #2d1b4e;
-  --accent: #6b21a8;
-  --trail: rgba(107,33,168,0.4);
-  --btn: linear-gradient(135deg, #6b21a8, #ff4ecb);
-  --border: rgba(255,255,255,0.6);
-  --success: #16a34a;
-  --error: #dc2626;
-}
-
-body {
-  font-family: 'Fredoka', sans-serif;
-  background: var(--bg);
-  background-size: 400% 400%;
-  animation: bgShift 12s ease infinite;
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
+@layer base {
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Fredoka', sans-serif;
+    background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #a18cd1, #fbc2eb, #84fab0, #8fd3f4);
+    background-size: 400% 400%;
+    animation: bgShift 12s ease infinite;
+    color: #2d1b4e;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 }
 
 @keyframes bgShift {
@@ -35,7 +26,22 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply relative rounded-2xl;
+    background: rgba(255,255,255,0.4);
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
+    backdrop-filter: blur(12px) saturate(1.4);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  }
+  .btn-primary {
+    @apply px-6 py-3 rounded-xl font-semibold text-white cursor-pointer;
+    background: linear-gradient(135deg, #6b21a8, #ff4ecb);
+    box-shadow: 0 4px 16px rgba(107,33,168,0.25);
   }
 }
