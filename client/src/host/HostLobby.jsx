@@ -28,13 +28,13 @@ function PlayerCard({ player, index }) {
       exit="exit"
     >
       <motion.div
-        className="glass flex flex-col items-center p-3 w-24"
+        className="glass flex flex-col items-center p-4 w-32"
         custom={index}
         variants={floatVariants}
         animate="animate"
       >
-        <Avatar name={player.name} size={64} />
-        <span className="text-xs font-bold mt-1 truncate w-full text-center">{player.name}</span>
+        <Avatar name={player.name} size={80} />
+        <span className="text-sm font-bold mt-2 truncate w-full text-center">{player.name}</span>
         {player.isHost && (
           <span className="text-[10px] bg-gradient-to-r from-pink to-purple-400 text-white px-2 py-0.5 rounded mt-1 font-bold">HOST</span>
         )}
@@ -46,13 +46,13 @@ function PlayerCard({ player, index }) {
 function TypingCard({ index }) {
   return (
     <motion.div
-      className="glass flex flex-col items-center p-3 w-24 opacity-60"
+      className="glass flex flex-col items-center p-4 w-32 opacity-60"
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       exit={{ scale: 0 }}
       transition={{ type: 'spring', stiffness: 300 }}
     >
-      <div className="w-16 h-16 rounded-full bg-white/30 flex items-center justify-center text-2xl animate-pulse">✏️</div>
+      <div className="w-20 h-20 rounded-full bg-white/30 flex items-center justify-center text-3xl animate-pulse">✏️</div>
       <span className="text-xs mt-1 opacity-70">joining...</span>
     </motion.div>
   );
@@ -69,7 +69,7 @@ export default function HostLobby() {
   }, [state.players.length, sfx]);
 
   const joinUrl = `${window.location.origin}/play?room=${state.roomCode}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(joinUrl)}`;
 
   const leftPlayers = state.players.filter((_, i) => i % 2 === 0);
   const rightPlayers = state.players.filter((_, i) => i % 2 === 1);
@@ -101,11 +101,11 @@ export default function HostLobby() {
         </h1>
 
         <div className="glass p-8 text-center mb-5">
-          <div className="font-display text-5xl font-bold text-accent tracking-[8px] mb-4">
+          <div className="font-display text-7xl font-bold text-accent tracking-[12px] mb-6">
             {state.roomCode}
           </div>
           <img
-            className="w-48 h-48 mx-auto rounded-2xl p-3 bg-white/90 shadow-lg border border-white/30"
+            className="w-[22rem] h-[22rem] mx-auto rounded-3xl p-5 bg-white/95 shadow-2xl border-2 border-white/40"
             src={qrUrl}
             alt="QR Code"
           />
