@@ -224,10 +224,11 @@ export default function HostResults() {
           return (
             <div key={name} className="flex flex-col items-center flex-1 max-w-[120px] justify-end h-full">
               <motion.div
-                animate={isWinner ? { scale: [1, 1.8, 1.5, 1.8, 1.5], rotate: [0, -15, 15, -10, 0], y: [0, -30, 0, -20, 0] } : {}}
-                transition={isWinner ? { duration: 1.2, repeat: Infinity, repeatDelay: 0.5 } : {}}
+                animate={isWinner ? { rotateY: [0, 360], y: [0, -60, 0] } : {}}
+                transition={isWinner ? { duration: 1.5, repeat: Infinity, repeatDelay: 0.3, ease: 'easeInOut' } : {}}
+                style={{ perspective: 800 }}
               >
-                <Avatar name={name} size={isWinner ? 120 : 56} className="mb-1" />
+                <Avatar name={name} size={56} className="mb-1" />
               </motion.div>
               <span className="text-sm font-semibold truncate w-full text-center mb-1">{name}</span>
               <span className="font-display text-3xl font-bold text-accent">{score}</span>
