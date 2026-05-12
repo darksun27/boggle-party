@@ -78,11 +78,10 @@ export default function GameBoard() {
       )}
 
       {/* Header */}
-      <div className="flex justify-between items-center w-full max-w-sm mb-2">
+      <div className="flex justify-center items-center w-full max-w-sm mb-2">
         <div className={`font-display text-xl font-bold px-3 py-1 rounded-xl glass ${urgent ? 'text-red-500' : warn ? 'text-orange-500' : 'text-accent'}`}>
           {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
         </div>
-        <div className="font-display text-lg font-bold text-accent">{score} pts</div>
       </div>
 
       {/* Timer bar */}
@@ -160,20 +159,6 @@ export default function GameBoard() {
         )}
       </AnimatePresence>
 
-      {/* Found words */}
-      <div className="flex flex-wrap gap-1.5 justify-center mt-2 max-h-28 overflow-y-auto px-2">
-        {words.map((w) => (
-          <motion.span
-            key={w}
-            className="glass px-2 py-0.5 text-xs font-semibold"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring' }}
-          >
-            {w}
-          </motion.span>
-        ))}
-      </div>
     </div>
   );
 }
