@@ -82,7 +82,7 @@ export default function HostResults() {
     const item = sequence.current[revealIdx];
     const pts = SCORE_TABLE[Math.min(item.word.length, 8)];
     setCurrentWord(item);
-    sfx.click();
+    sfx.wordReveal();
 
     if (item.type === 'common') {
       setProgressCommon(((revealIdx + 1) / commonCount.current) * 100);
