@@ -9,7 +9,8 @@ const DEFAULT_DURATION = 180;
 
 // --- Dictionary ---
 let DICT = null;
-const DICT_URL = 'https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt';
+let DICT_WORDS = []; // array for random selection during board generation
+const DICT_URL = 'https://raw.githubusercontent.com/first20hours/google-10000-english/master/google-10000-english-no-swears.txt';
 
 async function loadDict() {
   try {
@@ -21,7 +22,9 @@ async function loadDict() {
         res.on('end', () => resolve(data));
       }).on('error', reject);
     });
-    DICT = new Set(text.split('\n').map(w => w.trim().toLowerCase()).filter(w => w.length >= 3));
+    const words = text.split('\n').map(w => w.trim().toLowerCase()).filter(w => w.length >= 3 && /^[a-z]+$/.test(w));
+    DICT = new Set(words);
+    DICT_WORDS = words;
     console.log(`Dictionary loaded: ${DICT.size} words`);
   } catch (e) {
     console.error('Failed to load dictionary:', e.message);
@@ -29,13 +32,86 @@ async function loadDict() {
 }
 
 // --- Board generation ---
-const LETTERS = 'AAABCDEEEFGHIIIJKLMNOOOPQRSTUUVWXYZ';
+const FILL_LETTERS = 'AAABCDEEEFGHIIIJKLMNOOOPQRSTUUVWXYZ';
+
 function generateBoard(size) {
-  const board = [];
-  for (let i = 0; i < size * size; i++) {
-    board.push(LETTERS[Math.floor(Math.random() * LETTERS.length)]);
+  const board = new Array(size * size).fill(null);
+
+  // Try to place words on the board
+  const wordsPlaced = [];
+  const maxAttempts = 100;
+
+  for (let attempt = 0; attempt < maxAttempts && wordsPlaced.length < size; attempt++) {
+    // Pick a random word that fits the board
+    const word = pickWord(size);
+    if (!word) continue;
+
+    const path = tryPlaceWord(word, board, size);
+    if (path) {
+      for (let i = 0; i < path.length; i++) {
+        board[path[i]] = word[i].toUpperCase();
+      }
+      wordsPlaced.push(word);
+    }
   }
+
+  // Fill remaining empty cells with random letters
+  for (let i = 0; i < board.length; i++) {
+    if (!board[i]) board[i] = FILL_LETTERS[Math.floor(Math.random() * FILL_LETTERS.length)];
+  }
+
+  console.log(`Board generated: placed ${wordsPlaced.length} words: ${wordsPlaced.join(', ')}`);
   return board;
+}
+
+function pickWord(size) {
+  if (!DICT_WORDS.length) return null;
+  const maxLen = Math.min(size * 2, 8); // don't try words longer than reasonable path
+  for (let i = 0; i < 20; i++) {
+    const w = DICT_WORDS[Math.floor(Math.random() * DICT_WORDS.length)];
+    if (w.length >= 3 && w.length <= maxLen && !w.includes('q')) return w;
+  }
+  return null;
+}
+
+function tryPlaceWord(word, board, size) {
+  // Try multiple random starting positions
+  const cells = [...Array(size * size).keys()];
+  shuffle(cells);
+
+  for (const startCell of cells.slice(0, 15)) {
+    const path = findPath(word, 0, startCell, [], board, size);
+    if (path) return path;
+  }
+  return null;
+}
+
+function findPath(word, charIdx, cell, visited, board, size) {
+  if (charIdx >= word.length) return visited;
+  if (cell < 0 || cell >= size * size) return null;
+  if (visited.includes(cell)) return null;
+
+  const existing = board[cell];
+  if (existing && existing.toLowerCase() !== word[charIdx]) return null;
+
+  const newVisited = [...visited, cell];
+  if (charIdx === word.length - 1) return newVisited;
+
+  const neighbors = getAdj(cell, size);
+  shuffle(neighbors);
+  for (const next of neighbors) {
+    const result = findPath(word, charIdx + 1, next, newVisited, board, size);
+    if (result) return result;
+  }
+  return null;
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
 
 function getAdj(idx, size) {
