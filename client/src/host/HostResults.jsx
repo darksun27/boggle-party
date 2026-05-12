@@ -133,7 +133,7 @@ export default function HostResults() {
   return (
     <div className="flex flex-col items-center h-screen overflow-hidden">
       {/* Spacer to push content toward center */}
-      <div className="flex-1" />
+      <div className="flex-[0.3]" />
 
       {/* 1. Title */}
       <h2 className="font-display text-2xl font-bold bg-gradient-to-r from-pink via-yellow-300 to-cyan-300 bg-clip-text text-transparent mb-2">
@@ -257,7 +257,19 @@ export default function HostResults() {
         ))}
       </AnimatePresence>
 
-      <p className={`text-xs opacity-50 ${showWinner ? '' : 'hidden'}`}>⚡ Waiting for host to start next round...</p>
+      {/* Waiting banner */}
+      <AnimatePresence>
+        {showWinner && (
+          <motion.div
+            className="fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-b border-white/40 shadow-lg py-4 text-center"
+            initial={{ y: -100 }}
+            animate={{ y: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+          >
+            <span className="font-display text-lg text-accent font-bold">⚡ Waiting for host to start next round...</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
