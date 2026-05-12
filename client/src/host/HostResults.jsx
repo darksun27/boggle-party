@@ -80,7 +80,7 @@ export default function HostResults() {
       });
     }, 300);
 
-    const timer = setTimeout(() => setRevealIdx(i => i + 1), 900);
+    const timer = setTimeout(() => setRevealIdx(i => i + 1), 1800);
     return () => clearTimeout(timer);
   }, [revealIdx]);
 
@@ -173,7 +173,7 @@ export default function HostResults() {
         })}
       </div>
 
-      <p className="fixed bottom-2 text-xs opacity-50">⚡ Waiting for host to start next round...</p>
+      <p className={`fixed bottom-2 text-xs opacity-50 ${showWinner ? '' : 'hidden'}`}>⚡ Waiting for host to start next round...</p>
     </div>
   );
 }
