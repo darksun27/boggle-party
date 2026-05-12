@@ -405,7 +405,7 @@ wss.on('connection', (ws) => {
         const word = wordPath.map(i => room.board[i] === 'Q' ? 'QU' : room.board[i]).join('');
         if (word.length < room.minWordLen) { sendTo(ws, { type: 'word-result', valid: false, reason: `Min ${room.minWordLen} letters` }); return; }
         if (player.words.includes(word)) { sendTo(ws, { type: 'word-result', valid: false, reason: 'Already found' }); return; }
-        if (!DICT || !DICT.has(word.toLowerCase())) { sendTo(ws, { type: 'word-result', valid: false, reason: 'Not in dictionary' }); return; }
+        if (DICT && !DICT.has(word.toLowerCase())) { sendTo(ws, { type: 'word-result', valid: false, reason: 'Not in dictionary' }); return; }
         const pts = [0, 0, 0, 2, 3, 5, 8, 13, 21][Math.min(word.length, 8)];
         player.words.push(word);
         player.score += pts;
