@@ -5,12 +5,11 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js",
     "build": "cd client && npm install && npm run build",
-    "production": "NODE_ENV=production node server.js"
+    "dev": "node server.js"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "ws": "^8.16.0"
