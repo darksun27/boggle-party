@@ -93,7 +93,7 @@ export default function HostResults() {
       setProgressUnique((uniqueIdx / uniqueTotal) * 100);
     }
 
-    // Flying points after word is visible
+    // Flying points after slight delay
     setTimeout(() => {
       const stageEl = stageRef.current;
       if (stageEl) {
@@ -102,16 +102,20 @@ export default function HostResults() {
           const barEl = barRefs.current[name];
           if (!barEl) return;
           const barRect = barEl.getBoundingClientRect();
-          const id = `${revealIdx}-${name}`;
+          const id = `${revealIdx}-${name}-${pIdx}`;
+          const midX = (stageRect.left + stageRect.width / 2 + barRect.left + barRect.width / 2) / 2;
+          const curveOffset = (pIdx % 2 === 0 ? -1 : 1) * 120;
           setFlyingPoints(prev => [...prev, {
             id,
             pts,
             startX: stageRect.left + stageRect.width / 2,
             startY: stageRect.top + stageRect.height / 2,
+            midX: midX + curveOffset,
+            midY: Math.min(stageRect.top, barRect.top) - 60,
             endX: barRect.left + barRect.width / 2,
             endY: barRect.top,
           }]);
-          setTimeout(() => setFlyingPoints(prev => prev.filter(p => p.id !== id)), 1500);
+          setTimeout(() => setFlyingPoints(prev => prev.filter(p => p.id !== id)), 1200);
         });
       }
 
@@ -120,9 +124,9 @@ export default function HostResults() {
         item.players.forEach(name => { next[name] = (next[name] || 0) + pts; });
         return next;
       });
-    }, 800);
+    }, 500);
 
-    const timer = setTimeout(() => setRevealIdx(i => i + 1), 1800);
+    const timer = setTimeout(() => setRevealIdx(i => i + 1), 1300);
     return () => clearTimeout(timer);
   }, [revealIdx]);
 
@@ -179,7 +183,7 @@ export default function HostResults() {
                   borderColor: isHighlighted ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)',
                   scale: isHighlighted ? 1.1 : 1,
                 }}
-                transition={{ delay: isHighlighted ? pathIdx * 0.06 : 0, duration: 0.2 }}
+                transition={{ duration: 0.2 }}
                 style={{ color: isHighlighted ? '#fff' : 'rgba(45,27,78,0.6)' }}
               >
                 {letter === 'Q' ? 'Qu' : letter}
@@ -220,9 +224,14 @@ export default function HostResults() {
             className="fixed font-display text-3xl font-bold pointer-events-none z-50"
             style={{ color: '#fff', textShadow: '0 0 12px rgba(255,78,203,0.9), 0 0 24px rgba(107,33,168,0.7), 0 2px 4px rgba(0,0,0,0.5)' }}
             initial={{ left: fp.startX - 15, top: fp.startY - 10, scale: 1.2, opacity: 1 }}
-            animate={{ left: fp.endX - 15, top: fp.endY - 10, scale: 0.8, opacity: 1 }}
-            exit={{ opacity: 0, scale: 0.5 }}
-            transition={{ duration: 1.4, ease: [0.25, 0.1, 0.25, 1] }}
+            animate={{
+              left: [fp.startX - 15, fp.midX - 15, fp.endX - 15],
+              top: [fp.startY - 10, fp.midY - 10, fp.endY - 10],
+              scale: [1.2, 1.4, 0.7],
+              opacity: [1, 1, 0.8],
+            }}
+            exit={{ opacity: 0, scale: 0.3 }}
+            transition={{ duration: 1, ease: [0.2, 0.8, 0.3, 1], times: [0, 0.4, 1] }}
           >
             +{fp.pts}
           </motion.div>
