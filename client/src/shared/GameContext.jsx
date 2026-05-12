@@ -50,7 +50,7 @@ function reducer(state, action) {
     case 'SCORE_UPDATE':
       return { ...state, players: action.players };
     case 'GAME_END':
-      return { ...state, screen: 'ended', results: action.results, hostName: action.hostName, board: action.board || state.board, gridSize: action.gridSize || state.gridSize };
+      return { ...state, screen: 'ended', results: action.results, hostName: action.hostName, isHost: action.hostName === state.playerName, board: action.board || state.board, gridSize: action.gridSize || state.gridSize };
     case 'NEW_ROUND':
       return { ...state, screen: 'lobby', board: action.board, gridSize: action.gridSize, minWordLen: action.minWordLen, duration: action.duration, players: action.players, hostName: action.hostName, score: 0, words: [], results: null };
     case 'GAME_PAUSED':
