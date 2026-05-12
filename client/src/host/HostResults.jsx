@@ -190,38 +190,29 @@ export default function HostResults() {
           {currentWord && (
             <motion.div
               key={currentWord.word}
-              className="relative flex items-center justify-center"
+              className="flex items-center justify-center"
+              initial="hidden"
+              animate="visible"
+              exit={{ opacity: 0, scale: 0 }}
             >
-              {/* Ripple */}
-              <motion.div
-                className="absolute rounded-full"
-                style={{ border: `3px solid ${getWordStyle(currentWord.word).color}` }}
-                initial={{ width: 0, height: 0, opacity: 0.8 }}
-                animate={{ width: 300, height: 300, opacity: 0 }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
-              />
-              <motion.div
-                className="absolute rounded-full"
-                style={{ border: `2px solid ${getWordStyle(currentWord.word).color}` }}
-                initial={{ width: 0, height: 0, opacity: 0.5 }}
-                animate={{ width: 400, height: 400, opacity: 0 }}
-                transition={{ duration: 1, ease: 'easeOut', delay: 0.1 }}
-              />
-              {/* Word */}
-              <motion.span
-                className="font-display text-8xl font-bold relative z-10"
-                style={{
-                  color: '#fff',
-                  textShadow: `0 0 20px ${getWordStyle(currentWord.word).color}, 0 0 40px ${getWordStyle(currentWord.word).color}, 0 2px 4px rgba(0,0,0,0.4)`,
-                  WebkitTextStroke: `1px ${getWordStyle(currentWord.word).color}`,
-                }}
-                initial={{ scale: 0, rotate: -5 }}
-                animate={{ scale: 1, rotate: 0 }}
-                exit={{ scale: 0, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-              >
-                {currentWord.word}
-              </motion.span>
+              {currentWord.word.split('').map((letter, i) => (
+                <motion.span
+                  key={i}
+                  className="font-display text-8xl font-bold"
+                  style={{
+                    color: '#fff',
+                    textShadow: `0 0 20px ${getWordStyle(currentWord.word).color}, 0 0 40px ${getWordStyle(currentWord.word).color}, 0 2px 4px rgba(0,0,0,0.4)`,
+                    WebkitTextStroke: `1px ${getWordStyle(currentWord.word).color}`,
+                  }}
+                  variants={{
+                    hidden: { opacity: 0, y: 20, scale: 0.5 },
+                    visible: { opacity: 1, y: 0, scale: 1 },
+                  }}
+                  transition={{ delay: i * 0.05, type: 'spring', stiffness: 500, damping: 20 }}
+                >
+                  {letter}
+                </motion.span>
+              ))}
             </motion.div>
           )}
         </AnimatePresence>
