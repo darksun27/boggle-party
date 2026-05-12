@@ -5,6 +5,20 @@ import Avatar from '../shared/Avatar';
 
 const SCORE_TABLE = [0, 0, 0, 2, 3, 5, 8, 13, 21];
 
+const WORD_COLORS = {
+  3: { color: '#84fab0', shadow: '0 0 20px rgba(132,250,176,0.6)' },
+  4: { color: '#4de8ff', shadow: '0 0 20px rgba(77,232,255,0.6)' },
+  5: { color: '#a78bfa', shadow: '0 0 20px rgba(167,139,250,0.6)' },
+  6: { color: '#ff4ecb', shadow: '0 0 20px rgba(255,78,203,0.6)' },
+  7: { color: '#fbbf24', shadow: '0 0 20px rgba(251,191,36,0.6)' },
+  8: { color: '#f97316', shadow: '0 0 25px rgba(249,115,22,0.7)' },
+};
+
+function getWordStyle(word) {
+  const len = Math.min(word.length, 8);
+  return WORD_COLORS[len] || WORD_COLORS[8];
+}
+
 export default function HostResults() {
   const { state, send } = useGame();
   const { results } = state;
@@ -14,11 +28,13 @@ export default function HostResults() {
   const [showWinner, setShowWinner] = useState(false);
   const [progressCommon, setProgressCommon] = useState(0);
   const [progressUnique, setProgressUnique] = useState(0);
+  const [flyingPoints, setFlyingPoints] = useState([]);
+  const barRefs = useRef({});
+  const stageRef = useRef(null);
 
   const entries = Object.entries(results || {}).sort((a, b) => b[1].score - a[1].score);
   const maxScore = entries.length > 0 ? entries[0][1].score : 1;
 
-  // Build word sequence: common first, then unique per player
   const allWords = useRef({});
   const sequence = useRef([]);
   const commonCount = useRef(0);
@@ -44,11 +60,9 @@ export default function HostResults() {
     entries.forEach(([name]) => { scores[name] = 0; });
     setRunningScores(scores);
 
-    // Start reveal
     setTimeout(() => setRevealIdx(0), 1000);
   }, []);
 
-  // Reveal loop
   useEffect(() => {
     if (revealIdx < 0) return;
     if (revealIdx >= sequence.current.length) {
@@ -61,7 +75,6 @@ export default function HostResults() {
     const pts = SCORE_TABLE[Math.min(item.word.length, 8)];
     setCurrentWord(item);
 
-    // Update progress
     if (item.type === 'common') {
       setProgressCommon(((revealIdx + 1) / commonCount.current) * 100);
     } else {
@@ -71,14 +84,34 @@ export default function HostResults() {
       setProgressUnique((uniqueIdx / uniqueTotal) * 100);
     }
 
-    // Update scores
+    // Flying points after a short delay
     setTimeout(() => {
+      const stageEl = stageRef.current;
+      if (stageEl) {
+        const stageRect = stageEl.getBoundingClientRect();
+        item.players.forEach((name, pIdx) => {
+          const barEl = barRefs.current[name];
+          if (!barEl) return;
+          const barRect = barEl.getBoundingClientRect();
+          const id = `${revealIdx}-${name}`;
+          setFlyingPoints(prev => [...prev, {
+            id,
+            pts,
+            startX: stageRect.left + stageRect.width / 2,
+            startY: stageRect.top + stageRect.height / 2,
+            endX: barRect.left + barRect.width / 2,
+            endY: barRect.top,
+          }]);
+          setTimeout(() => setFlyingPoints(prev => prev.filter(p => p.id !== id)), 900);
+        });
+      }
+
       setRunningScores(prev => {
         const next = { ...prev };
         item.players.forEach(name => { next[name] = (next[name] || 0) + pts; });
         return next;
       });
-    }, 300);
+    }, 400);
 
     const timer = setTimeout(() => setRevealIdx(i => i + 1), 1800);
     return () => clearTimeout(timer);
@@ -112,7 +145,7 @@ export default function HostResults() {
             />
           </div>
         )}
-        <div className="bg-yellow-900/20 backdrop-blur-sm relative overflow-hidden" style={{ flex: numUnique }}>
+        <div className="bg-yellow-900/20 backdrop-blur-sm relative overflow-hidden" style={{ flex: numUnique || 1 }}>
           <motion.div
             className="h-full rounded-full"
             style={{ background: 'linear-gradient(90deg, #ff4ecb, #fbbf24)', boxShadow: '0 0 12px rgba(255,78,203,0.5)' }}
@@ -123,13 +156,13 @@ export default function HostResults() {
       </div>
 
       {/* Stage word */}
-      <div className="h-24 flex items-center justify-center mb-6">
+      <div ref={stageRef} className="h-24 flex items-center justify-center mb-6">
         <AnimatePresence mode="wait">
           {currentWord && (
             <motion.div
               key={currentWord.word}
-              className={`font-display text-4xl font-bold ${currentWord.type === 'common' ? 'text-purple-500' : 'text-yellow-400'}`}
-              style={{ textShadow: currentWord.type === 'common' ? '0 0 30px rgba(138,43,226,0.6)' : '0 0 30px rgba(255,215,0,0.6)' }}
+              className="font-display text-5xl font-bold"
+              style={{ color: getWordStyle(currentWord.word).color, textShadow: getWordStyle(currentWord.word).shadow }}
               initial={{ scale: 0, rotate: -5 }}
               animate={{ scale: 1, rotate: 0 }}
               exit={{ scale: 0, opacity: 0 }}
@@ -140,6 +173,23 @@ export default function HostResults() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Flying points */}
+      <AnimatePresence>
+        {flyingPoints.map(fp => (
+          <motion.div
+            key={fp.id}
+            className="fixed font-display text-2xl font-bold text-yellow-300 pointer-events-none z-50"
+            style={{ textShadow: '0 0 10px rgba(255,222,89,0.8)' }}
+            initial={{ left: fp.startX - 15, top: fp.startY - 10, scale: 1, opacity: 1 }}
+            animate={{ left: fp.endX - 15, top: fp.endY - 10, scale: 0.6, opacity: 0.7 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+          >
+            +{fp.pts}
+          </motion.div>
+        ))}
+      </AnimatePresence>
 
       {/* Winner banner + Next Round */}
       <AnimatePresence>
@@ -169,7 +219,7 @@ export default function HostResults() {
 
       {/* Bar chart - fixed to bottom */}
       <div className="fixed bottom-0 left-0 right-0 flex items-end justify-center gap-4 px-5 h-[45vh]">
-        {entries.map(([name, data], i) => {
+        {entries.map(([name]) => {
           const score = runningScores[name] || 0;
           const barHeight = maxScore > 0 ? Math.max(10, (score / maxScore) * 180) : 10;
           return (
@@ -179,16 +229,17 @@ export default function HostResults() {
               <motion.span
                 className="font-display text-sm font-bold text-accent"
                 key={score}
-                animate={{ scale: [1, 1.3, 1] }}
+                animate={{ scale: [1, 1.4, 1] }}
                 transition={{ duration: 0.3 }}
               >
                 {score}
               </motion.span>
               <motion.div
+                ref={el => { barRefs.current[name] = el; }}
                 className="w-full rounded-t-xl border border-white/40"
                 style={{ background: 'linear-gradient(180deg, rgba(255,78,203,0.5), rgba(107,33,168,0.5))' }}
                 animate={{ height: barHeight }}
-                transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                transition={{ type: 'spring', stiffness: 150, damping: 12, mass: 0.8 }}
               />
             </div>
           );
