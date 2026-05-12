@@ -274,7 +274,7 @@ export default function HostResults() {
               </motion.div>
               <span className="text-sm font-semibold truncate w-full text-center mb-1">{name}</span>
               <motion.span
-                className="font-display text-xl font-bold text-accent"
+                className="font-display text-4xl font-bold text-accent"
               >
                 {score}
               </motion.span>
