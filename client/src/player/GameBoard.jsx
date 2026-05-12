@@ -159,7 +159,7 @@ export default function GameBoard() {
             <motion.div
               key={i}
               data-idx={i}
-              className={`cell glass w-full aspect-square flex items-center justify-center text-2xl font-bold ${isSelected ? 'selected' : ''}`}
+              className={`cell glass w-full aspect-square flex items-center justify-center text-4xl font-bold ${isSelected ? 'selected' : ''}`}
               initial={{ scale: 0 }}
               animate={{
                 scale: isFlashing ? [1, 1.1, 1] : isSelected ? 1.12 : 1,
