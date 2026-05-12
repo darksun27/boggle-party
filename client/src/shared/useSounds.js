@@ -1,10 +1,17 @@
 import { useSound } from 'react-sounds';
 
+export const ALL_SOUNDS = [
+  'ui/button_soft',
+  'arcade/power_up',
+  'arcade/level_down',
+  'arcade/coin_bling',
+  'ui/button_hard',
+  'notification/warning',
+  'ui/button_medium',
+];
+
 export function useSounds() {
   const { play: cellTap } = useSound('ui/button_soft');
-  const { play: wordAccepted } = useSound('ui/success_chime');
-  const { play: wordRejected } = useSound('ui/buzz');
-  const { play: alreadyFound } = useSound('ui/blocked');
   const { play: gameStart } = useSound('arcade/power_up');
   const { play: gameOver } = useSound('arcade/level_down');
   const { play: playerJoin } = useSound('arcade/coin_bling');
@@ -14,9 +21,6 @@ export function useSounds() {
 
   return {
     cellTap: () => cellTap({ volume: 0.3 }),
-    wordAccepted: () => wordAccepted({ volume: 0.5 }),
-    wordRejected: () => wordRejected({ volume: 0.4 }),
-    alreadyFound: () => alreadyFound({ volume: 0.4 }),
     gameStart: () => gameStart({ volume: 0.5 }),
     gameOver: () => gameOver({ volume: 0.5 }),
     playerJoin: () => playerJoin({ volume: 0.4 }),

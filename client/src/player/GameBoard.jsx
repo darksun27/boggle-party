@@ -19,6 +19,7 @@ export default function GameBoard() {
   const [selected, setSelected] = useState([]);
   const [dragging, setDragging] = useState(false);
   const boardRef = useRef(null);
+  const lastPathRef = useRef([]);
 
   const { board, gridSize, timeLeft, duration, score, words, lastResult, paused } = state;
 
@@ -54,15 +55,26 @@ export default function GameBoard() {
   const onEnd = () => {
     if (!dragging) return;
     setDragging(false);
-    if (selected.length > 0) send({ type: 'submit-word', path: selected });
+    if (selected.length > 0) {
+      lastPathRef.current = [...selected];
+      send({ type: 'submit-word', path: selected });
+    }
     setSelected([]);
   };
 
   useEffect(() => {
     if (lastResult) {
-      if (lastResult.valid) sfx.wordAccepted();
-      else if (lastResult.reason === 'Already found') sfx.alreadyFound();
-      else sfx.wordRejected();
+      // Flash cells with color feedback
+      const cells = boardRef.current?.querySelectorAll('[data-idx]');
+      if (cells && lastPathRef.current.length > 0) {
+        const cls = lastResult.valid ? 'flash-green' : lastResult.reason === 'Already found' ? 'flash-yellow' : 'flash-red';
+        lastPathRef.current.forEach(idx => cells[idx]?.classList.add(cls));
+        setTimeout(() => lastPathRef.current.forEach(idx => cells[idx]?.classList.remove(cls)), 600);
+        if (!lastResult.valid && lastResult.reason !== 'Already found') {
+          boardRef.current?.classList.add('board-shake');
+          setTimeout(() => boardRef.current?.classList.remove('board-shake'), 300);
+        }
+      }
       const t = setTimeout(() => dispatch({ type: 'CLEAR_RESULT' }), 1500);
       return () => clearTimeout(t);
     }
