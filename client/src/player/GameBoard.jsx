@@ -101,7 +101,7 @@ export default function GameBoard() {
       </div>
 
       {/* Timer bar */}
-      <div className="w-full h-1.5 rounded-full bg-white/20 mb-3 overflow-hidden">
+      <div className="w-full h-1.5 rounded-full bg-white/20 mb-2 overflow-hidden">
         <motion.div
           className="h-full rounded-full"
           style={{ background: urgent ? 'linear-gradient(90deg, #ef4444, #f97316)' : 'linear-gradient(90deg, #84fab0, #4de8ff)' }}
@@ -109,6 +109,9 @@ export default function GameBoard() {
           transition={{ duration: 1, ease: 'linear' }}
         />
       </div>
+
+      {/* Board - centered */}
+      <div className="flex-1 flex items-center justify-center">
 
       {/* Board */}
       <motion.div
@@ -169,6 +172,7 @@ export default function GameBoard() {
           );
         })}
       </motion.div>
+      </div>
 
       {/* Current word */}
       <div className="font-display text-2xl tracking-widest text-accent mt-2 min-h-[1.5em]">
