@@ -108,7 +108,12 @@ export function GameProvider({ children, role }) {
   // Load test results if available (via /test-results endpoint)
   useEffect(() => {
     if (window.__TEST_RESULTS__) {
-      dispatch({ ...window.__TEST_RESULTS__, type: 'GAME_END' });
+      const start = () => {
+        dispatch({ ...window.__TEST_RESULTS__, type: 'GAME_END' });
+        document.removeEventListener('click', start);
+      };
+      document.addEventListener('click', start);
+      return () => document.removeEventListener('click', start);
     }
   }, []);
 
