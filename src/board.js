@@ -130,4 +130,4 @@ function generate(size) {
   return board;
 }
 
-module.exports = { generate, isValidPath, getAdj };
+module.exports = { generate, isValidPath };

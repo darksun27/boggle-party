@@ -44,4 +44,14 @@
     background: linear-gradient(135deg, #6b21a8, #ff4ecb);
     box-shadow: 0 4px 16px rgba(107,33,168,0.25);
   }
+  .board {
+    touch-action: none;
+    user-select: none;
+  }
+  .cell.selected {
+    background: linear-gradient(135deg, #ff4ecb, #a18cd1) !important;
+    border-color: rgba(255,255,255,0.8);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(107,33,168,0.4);
+  }
 }

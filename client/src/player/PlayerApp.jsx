@@ -4,7 +4,6 @@ import JoinScreen from './JoinScreen';
 import Lobby from './Lobby';
 import GameBoard from './GameBoard';
 import EndScreen from './EndScreen';
-import './player.css';
 
 export default function PlayerApp() {
   const { state } = useGame();
