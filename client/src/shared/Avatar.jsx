@@ -1,28 +1,12 @@
 import React from 'react';
+import BoringAvatar from 'boring-avatars';
 
-const EMOJIS = ['🦊', '🐸', '🦆', '🐙', '🦄', '🐢', '🦩', '🐧', '🦋', '🐝', '🦁', '🐼'];
-const COLORS = ['#fecaca', '#bfdbfe', '#c4b5fd', '#d1fae5', '#fde68a', '#fbcfe8', '#a5f3fc', '#e9d5ff'];
-
-function hashCode(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
+const PALETTE = ['#ff4ecb', '#6b21a8', '#4de8ff', '#84fab0', '#ffde59', '#f97316', '#a78bfa'];
 
 export default function Avatar({ name, size = 64, className = '' }) {
-  const h = hashCode(name);
-  const emoji = EMOJIS[h % EMOJIS.length];
-  const bg = COLORS[h % COLORS.length];
-
   return (
-    <div
-      className={`flex items-center justify-center rounded-full border-2 border-white/60 shadow-md ${className}`}
-      style={{ width: size, height: size, backgroundColor: bg, fontSize: size * 0.5 }}
-    >
-      {emoji}
+    <div className={className} style={{ width: size, height: size }}>
+      <BoringAvatar size={size} name={name} variant="beam" colors={PALETTE} />
     </div>
   );
 }
