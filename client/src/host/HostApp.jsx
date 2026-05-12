@@ -6,13 +6,17 @@ import HostResults from './HostResults';
 import './host.css';
 
 export default function HostApp() {
-  const { state, send, connected } = useGame();
+  const { state, send, connected, setOnConnect } = useGame();
 
   useEffect(() => {
+    setOnConnect(() => {
+      send({ type: 'create-room' });
+    });
+    // If already connected, send immediately
     if (connected && state.screen === 'loading') {
       send({ type: 'create-room' });
     }
-  }, [connected, state.screen, send]);
+  }, []);
 
   switch (state.screen) {
     case 'loading': return <div className="screen center"><h1 className="logo">🎲 BOGGLE PARTY</h1><p>Connecting...</p></div>;

@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useCallback } from 'react';
+import { createContext, useContext, useReducer, useCallback, useRef } from 'react';
 import { useWebSocket } from './useWebSocket';
 
 const GameContext = createContext(null);
@@ -70,6 +70,7 @@ function reducer(state, action) {
 
 export function GameProvider({ children, role }) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const onConnectRef = useRef(null);
 
   const onMessage = useCallback((msg) => {
     switch (msg.type) {
@@ -93,10 +94,16 @@ export function GameProvider({ children, role }) {
     }
   }, []);
 
-  const { send, connected } = useWebSocket(onMessage);
+  const onConnect = useCallback((ws) => {
+    if (onConnectRef.current) onConnectRef.current(ws);
+  }, []);
+
+  const { send, connected } = useWebSocket(onMessage, onConnect);
+
+  const setOnConnect = useCallback((fn) => { onConnectRef.current = fn; }, []);
 
   return (
-    <GameContext.Provider value={{ state, send, connected, dispatch }}>
+    <GameContext.Provider value={{ state, send, connected, dispatch, setOnConnect }}>
       {children}
     </GameContext.Provider>
   );
