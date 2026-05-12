@@ -157,7 +157,7 @@ export default function HostResults() {
       </div>
 
       {/* 3. Board */}
-      {state.board && (
+      {state.board && !showWinner && (
         <div className="grid gap-2 mb-6" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
           {state.board.map((letter, i) => {
             const pathIdx = currentWord && currentWord.path ? currentWord.path.indexOf(i) : -1;
@@ -209,7 +209,6 @@ export default function HostResults() {
         {showWinner && entries.length > 0 && (
           <motion.div className="flex flex-col items-center gap-3 mb-4" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }}>
             <div className="font-display text-3xl text-pink font-bold">👑 {entries[0][0]} WINS! 👑</div>
-            <motion.button className="btn-primary px-8 py-3 text-lg rounded-xl" onClick={() => send({ type: 'restart', gridSize: state.gridSize, minWordLen: state.minWordLen, duration: state.duration })} whileTap={{ scale: 0.95 }}>Next Round</motion.button>
           </motion.div>
         )}
       </AnimatePresence>
