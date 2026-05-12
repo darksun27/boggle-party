@@ -66,12 +66,12 @@ export default function GameBoard() {
       const t = setTimeout(() => dispatch({ type: 'CLEAR_RESULT' }), 1500);
       return () => clearTimeout(t);
     }
-  }, [lastResult, dispatch, sfx]);
+  }, [lastResult]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (timeLeft <= 10 && timeLeft > 0) sfx.timerWarning();
-    else if (timeLeft <= 30 && timeLeft > 0 && timeLeft % 5 === 0) sfx.timerTick();
-  }, [timeLeft, sfx]);
+    if (timeLeft === 30 || timeLeft === 20 || timeLeft === 10) sfx.timerTick();
+    if (timeLeft <= 5 && timeLeft > 0) sfx.timerWarning();
+  }, [timeLeft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentWord = selected.map(i => board[i] === 'Q' ? 'QU' : board[i]).join('');
   const timerPct = duration > 0 ? timeLeft / duration : 1;

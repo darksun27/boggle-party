@@ -13,8 +13,8 @@ export default function HostGame() {
   const urgent = timeLeft <= 10;
 
   useEffect(() => {
-    if (timeLeft <= 10 && timeLeft > 0) sfx.timerWarning();
-  }, [timeLeft, sfx]);
+    if (timeLeft <= 5 && timeLeft > 0) sfx.timerWarning();
+  }, [timeLeft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4">
