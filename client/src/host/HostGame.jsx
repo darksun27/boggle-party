@@ -1,14 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useGame } from '../shared/GameContext';
 import Avatar from '../shared/Avatar';
+import { useSounds } from '../shared/useSounds';
 
 export default function HostGame() {
   const { state } = useGame();
+  const sfx = useSounds();
   const { board, gridSize, timeLeft, duration, players } = state;
   const timerPct = duration > 0 ? timeLeft / duration : 1;
   const sorted = [...players].sort((a, b) => b.score - a.score);
   const urgent = timeLeft <= 10;
+
+  useEffect(() => {
+    if (timeLeft <= 10 && timeLeft > 0) sfx.timerWarning();
+  }, [timeLeft, sfx]);
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4">

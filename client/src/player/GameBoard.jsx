@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../shared/GameContext';
+import { useSounds } from '../shared/useSounds';
 
 function getAdj(idx, size) {
   const r = Math.floor(idx / size), c = idx % size, adj = [];
@@ -14,6 +15,7 @@ function getAdj(idx, size) {
 
 export default function GameBoard() {
   const { state, send, dispatch } = useGame();
+  const sfx = useSounds();
   const [selected, setSelected] = useState([]);
   const [dragging, setDragging] = useState(false);
   const boardRef = useRef(null);
@@ -29,6 +31,7 @@ export default function GameBoard() {
   const onStart = (idx) => {
     setDragging(true);
     setSelected([idx]);
+    sfx.cellTap();
     navigator.vibrate && navigator.vibrate(10);
   };
 
@@ -40,6 +43,7 @@ export default function GameBoard() {
       if (prev.length >= 2 && idx === prev[prev.length - 2]) return prev.slice(0, -1);
       if (prev.includes(idx)) return prev;
       if (getAdj(prev[prev.length - 1], gridSize).includes(idx)) {
+        sfx.cellTap();
         navigator.vibrate && navigator.vibrate(10);
         return [...prev, idx];
       }
@@ -56,10 +60,18 @@ export default function GameBoard() {
 
   useEffect(() => {
     if (lastResult) {
+      if (lastResult.valid) sfx.wordAccepted();
+      else if (lastResult.reason === 'Already found') sfx.alreadyFound();
+      else sfx.wordRejected();
       const t = setTimeout(() => dispatch({ type: 'CLEAR_RESULT' }), 1500);
       return () => clearTimeout(t);
     }
-  }, [lastResult, dispatch]);
+  }, [lastResult, dispatch, sfx]);
+
+  useEffect(() => {
+    if (timeLeft <= 10 && timeLeft > 0) sfx.timerWarning();
+    else if (timeLeft <= 30 && timeLeft > 0 && timeLeft % 5 === 0) sfx.timerTick();
+  }, [timeLeft, sfx]);
 
   const currentWord = selected.map(i => board[i] === 'Q' ? 'QU' : board[i]).join('');
   const timerPct = duration > 0 ? timeLeft / duration : 1;

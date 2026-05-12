@@ -1,17 +1,27 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useGame } from '../shared/GameContext';
+import { useSounds } from '../shared/useSounds';
 
 const SIZES = [4, 5, 6];
+const MIN_LENS = [3, 4, 5];
 const DURATIONS = [60, 90, 120, 180];
 
 export default function Lobby() {
   const { state, send } = useGame();
+  const sfx = useSounds();
   const [gridIdx, setGridIdx] = useState(0);
+  const [minLenIdx, setMinLenIdx] = useState(0);
   const [durIdx, setDurIdx] = useState(3);
 
+  const cycle = (setter, arr, current, dir) => {
+    sfx.click();
+    setter((current + dir + arr.length) % arr.length);
+  };
+
   const startGame = () => {
-    send({ type: 'start-game', gridSize: SIZES[gridIdx], minWordLen: state.minWordLen, duration: DURATIONS[durIdx] });
+    sfx.gameStart();
+    send({ type: 'start-game', gridSize: SIZES[gridIdx], minWordLen: MIN_LENS[minLenIdx], duration: DURATIONS[durIdx] });
   };
 
   return (
@@ -33,18 +43,27 @@ export default function Lobby() {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-semibold">Grid</span>
                 <div className="flex items-center gap-3">
-                  <button className="w-9 h-9 rounded-full glass flex items-center justify-center text-xl text-accent" onClick={() => setGridIdx((gridIdx - 1 + SIZES.length) % SIZES.length)}>‹</button>
+                  <button className="w-9 h-9 rounded-full glass flex items-center justify-center text-xl text-accent" onClick={() => cycle(setGridIdx, SIZES, gridIdx, -1)}>‹</button>
                   <span className="font-display font-bold w-12 text-center">{SIZES[gridIdx]}×{SIZES[gridIdx]}</span>
-                  <button className="w-9 h-9 rounded-full glass flex items-center justify-center text-xl text-accent" onClick={() => setGridIdx((gridIdx + 1) % SIZES.length)}>›</button>
+                  <button className="w-9 h-9 rounded-full glass flex items-center justify-center text-xl text-accent" onClick={() => cycle(setGridIdx, SIZES, gridIdx, 1)}>›</button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-semibold">Min Letters</span>
+                <div className="flex items-center gap-3">
+                  <button className="w-9 h-9 rounded-full glass flex items-center justify-center text-xl text-accent" onClick={() => cycle(setMinLenIdx, MIN_LENS, minLenIdx, -1)}>‹</button>
+                  <span className="font-display font-bold w-12 text-center">{MIN_LENS[minLenIdx]}+</span>
+                  <button className="w-9 h-9 rounded-full glass flex items-center justify-center text-xl text-accent" onClick={() => cycle(setMinLenIdx, MIN_LENS, minLenIdx, 1)}>›</button>
                 </div>
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold">Time</span>
                 <div className="flex items-center gap-3">
-                  <button className="w-9 h-9 rounded-full glass flex items-center justify-center text-xl text-accent" onClick={() => setDurIdx((durIdx - 1 + DURATIONS.length) % DURATIONS.length)}>‹</button>
+                  <button className="w-9 h-9 rounded-full glass flex items-center justify-center text-xl text-accent" onClick={() => cycle(setDurIdx, DURATIONS, durIdx, -1)}>‹</button>
                   <span className="font-display font-bold w-12 text-center">{DURATIONS[durIdx]}s</span>
-                  <button className="w-9 h-9 rounded-full glass flex items-center justify-center text-xl text-accent" onClick={() => setDurIdx((durIdx + 1) % DURATIONS.length)}>›</button>
+                  <button className="w-9 h-9 rounded-full glass flex items-center justify-center text-xl text-accent" onClick={() => cycle(setDurIdx, DURATIONS, durIdx, 1)}>›</button>
                 </div>
               </div>
             </div>

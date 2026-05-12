@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../shared/GameContext';
 import Avatar from '../shared/Avatar';
+import { useSounds } from '../shared/useSounds';
 
 const floatVariants = {
   animate: (i) => ({
@@ -59,6 +60,14 @@ function TypingCard({ index }) {
 
 export default function HostLobby() {
   const { state } = useGame();
+  const sfx = useSounds();
+  const prevCount = useRef(state.players.length);
+
+  useEffect(() => {
+    if (state.players.length > prevCount.current) sfx.playerJoin();
+    prevCount.current = state.players.length;
+  }, [state.players.length, sfx]);
+
   const joinUrl = `${window.location.origin}/play?room=${state.roomCode}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
 
