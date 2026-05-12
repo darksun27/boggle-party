@@ -5,6 +5,40 @@ import Avatar from '../shared/Avatar';
 
 const SCORE_TABLE = [0, 0, 0, 2, 3, 5, 8, 13, 21];
 
+function getAdj(idx, size) {
+  const r = Math.floor(idx / size), c = idx % size, adj = [];
+  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+    if (!dr && !dc) continue;
+    const nr = r + dr, nc = c + dc;
+    if (nr >= 0 && nr < size && nc >= 0 && nc < size) adj.push(nr * size + nc);
+  }
+  return adj;
+}
+
+function findWordPath(word, board, size) {
+  if (!board || !word) return [];
+  const upper = word.toUpperCase();
+  function dfs(charIdx, cell, visited) {
+    const letter = board[cell] === 'Q' ? 'QU' : board[cell];
+    if (upper.slice(charIdx, charIdx + letter.length) !== letter) return null;
+    const nextIdx = charIdx + letter.length;
+    const path = [...visited, cell];
+    if (nextIdx >= upper.length) return path;
+    for (const adj of getAdj(cell, size)) {
+      if (!visited.includes(adj)) {
+        const result = dfs(nextIdx, adj, path);
+        if (result) return result;
+      }
+    }
+    return null;
+  }
+  for (let i = 0; i < board.length; i++) {
+    const result = dfs(0, i, []);
+    if (result) return result;
+  }
+  return [];
+}
+
 const WORD_COLORS = {
   3: { color: '#84fab0', shadow: '0 0 20px rgba(132,250,176,0.6)' },
   4: { color: '#4de8ff', shadow: '0 0 20px rgba(77,232,255,0.6)' },
@@ -162,7 +196,11 @@ export default function HostResults() {
             <motion.div
               key={currentWord.word}
               className="font-display text-5xl font-bold"
-              style={{ color: getWordStyle(currentWord.word).color, textShadow: getWordStyle(currentWord.word).shadow }}
+              style={{
+                color: '#fff',
+                textShadow: `0 0 20px ${getWordStyle(currentWord.word).color}, 0 0 40px ${getWordStyle(currentWord.word).color}, 0 2px 4px rgba(0,0,0,0.4)`,
+                WebkitTextStroke: `1px ${getWordStyle(currentWord.word).color}`,
+              }}
               initial={{ scale: 0, rotate: -5 }}
               animate={{ scale: 1, rotate: 0 }}
               exit={{ scale: 0, opacity: 0 }}
@@ -173,6 +211,32 @@ export default function HostResults() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Board with highlighted path */}
+      {state.board && currentWord && (
+        <div className="grid gap-1.5 mb-4" style={{ gridTemplateColumns: `repeat(${state.gridSize}, 1fr)` }}>
+          {state.board.map((letter, i) => {
+            const path = currentWord ? findWordPath(currentWord.word, state.board, state.gridSize) : [];
+            const isHighlighted = path.includes(i);
+            const pathIdx = path.indexOf(i);
+            return (
+              <motion.div
+                key={i}
+                className="w-10 h-10 flex items-center justify-center text-sm font-bold rounded-lg border"
+                animate={{
+                  backgroundColor: isHighlighted ? getWordStyle(currentWord.word).color : 'rgba(255,255,255,0.25)',
+                  borderColor: isHighlighted ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)',
+                  scale: isHighlighted ? 1.1 : 1,
+                }}
+                transition={{ delay: isHighlighted ? pathIdx * 0.05 : 0, duration: 0.2 }}
+                style={{ color: isHighlighted ? '#fff' : 'rgba(45,27,78,0.6)' }}
+              >
+                {letter === 'Q' ? 'Qu' : letter}
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Flying points */}
       <AnimatePresence>

@@ -36,7 +36,9 @@ const server = http.createServer((req, res) => {
             "Alice": { words: ["STAR","RATE","TEAR","STREAM","REAL","DEAL","CREAM"], score: 28 },
             "Bob": { words: ["STAR","RATE","HEAT","MEAN","LEAN","CLEAN"], score: 22 },
             "Charlie": { words: ["STAR","DEAL","STEAM","DREAM","NEAR"], score: 20 }
-          }
+          },
+          board: ["S","T","R","E","A","M","D","C","L","E","A","N","H","R","I","G"],
+          gridSize: 4
         };
       </script>`;
       res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache' });
