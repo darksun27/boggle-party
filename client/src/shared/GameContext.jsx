@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useCallback, useRef } from 'react';
+import { createContext, useContext, useReducer, useCallback, useRef, useEffect } from 'react';
 import { useWebSocket } from './useWebSocket';
 
 const GameContext = createContext(null);
@@ -103,6 +103,13 @@ export function GameProvider({ children, role }) {
   }, [role]);
 
   const { send, connected } = useWebSocket(onMessage, onConnect);
+
+  // Load test results if available (via /test-results endpoint)
+  useEffect(() => {
+    if (window.__TEST_RESULTS__) {
+      dispatch({ ...window.__TEST_RESULTS__, type: 'GAME_END' });
+    }
+  }, []);
 
   return (
     <GameContext.Provider value={{ state, send, connected, dispatch }}>

@@ -25,6 +25,26 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (url === '/test-results') {
+    // Serve host.html but the WS will receive dummy game-end data
+    const filePath = path.join(DIST_DIR, 'host.html');
+    fs.readFile(filePath, 'utf8', (err, html) => {
+      if (err) { res.writeHead(500); res.end('Error'); return; }
+      const script = `<script>
+        window.__TEST_RESULTS__ = {
+          results: {
+            "Alice": { words: ["STAR","RATE","TEAR","STREAM","REAL","DEAL","CREAM"], score: 28 },
+            "Bob": { words: ["STAR","RATE","HEAT","MEAN","LEAN","CLEAN"], score: 22 },
+            "Charlie": { words: ["STAR","DEAL","STEAM","DREAM","NEAR"], score: 20 }
+          }
+        };
+      </script>`;
+      res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache' });
+      res.end(html.replace('</head>', script + '</head>'));
+    });
+    return;
+  }
+
   let filePath;
   if (url === '/' || url === '/host') filePath = path.join(DIST_DIR, 'host.html');
   else if (url === '/play') filePath = path.join(DIST_DIR, 'player.html');

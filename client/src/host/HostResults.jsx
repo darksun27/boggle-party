@@ -6,7 +6,7 @@ import Avatar from '../shared/Avatar';
 const SCORE_TABLE = [0, 0, 0, 2, 3, 5, 8, 13, 21];
 
 export default function HostResults() {
-  const { state } = useGame();
+  const { state, send } = useGame();
   const { results } = state;
   const [revealIdx, setRevealIdx] = useState(-1);
   const [currentWord, setCurrentWord] = useState(null);
@@ -131,16 +131,28 @@ export default function HostResults() {
         </AnimatePresence>
       </div>
 
-      {/* Winner banner */}
+      {/* Winner banner + Next Round */}
       <AnimatePresence>
         {showWinner && entries.length > 0 && (
           <motion.div
-            className="font-display text-3xl text-pink font-bold mb-6"
+            className="flex flex-col items-center gap-4 mb-6"
             initial={{ scale: 0 }}
-            animate={{ scale: [0, 1.2, 1] }}
-            transition={{ duration: 0.6, type: 'spring' }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 300 }}
           >
-            👑 {entries[0][0]} WINS! 👑
+            <div className="font-display text-3xl text-pink font-bold">
+              👑 {entries[0][0]} WINS! 👑
+            </div>
+            <motion.button
+              className="btn-primary px-8 py-3 text-lg rounded-xl"
+              onClick={() => send({ type: 'restart', gridSize: state.gridSize, minWordLen: state.minWordLen, duration: state.duration })}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              Next Round
+            </motion.button>
           </motion.div>
         )}
       </AnimatePresence>
